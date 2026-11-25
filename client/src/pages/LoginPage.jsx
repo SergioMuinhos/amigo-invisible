@@ -83,17 +83,6 @@ export default function LoginPage() {
 
       setLoading(true);
       try {
-        try {
-          const check = await api.checkEmail(email.trim());
-          if (check?.exists) {
-            setError('Este correo electrónico ya está registrado. Inicia sesión o utiliza otro correo.');
-            setLoading(false);
-            return;
-          }
-        } catch (checkErr) {
-          console.warn('Check email warning:', checkErr);
-        }
-
         const fullName = `${firstName.trim()} ${lastName.trim()}`;
         const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
         await updateProfile(userCredential.user, { displayName: fullName });
