@@ -120,6 +120,7 @@ router.get('/:id', authenticate, (req, res) => {
     const members = db
       .prepare(`
         SELECT m.user_id, u.display_name, u.email, u.photo_url, m.assigned_to,
+               m.validation_status,
                au.display_name AS assigned_name
         FROM members m
         JOIN users u ON u.id = m.user_id
@@ -129,20 +130,37 @@ router.get('/:id', authenticate, (req, res) => {
       `)
       .all(id);
 
+    const totalMembers = members.length;
+    const approvedCount = members.filter((m) => m.validation_status === 'approved').length;
+    const rejectedCount = members.filter((m) => m.validation_status === 'rejected').length;
+    const pendingCount = members.filter(
+      (m) => !m.validation_status || m.validation_status === 'pending'
+    ).length;
+    const allApproved = totalMembers >= 2 && approvedCount === totalMembers;
+
     res.json({
       group: {
         id: group.id,
         name: group.name,
         code: group.code,
         assigned: !!group.assigned,
+        emails_sent: !!group.emails_sent,
         creator_id: group.creator_id,
         is_creator: group.creator_id === (req.user.id || req.user.uid),
+        validationStats: {
+          total: totalMembers,
+          approved: approvedCount,
+          rejected: rejectedCount,
+          pending: pendingCount,
+          allApproved,
+        },
       },
       members: members.map((m) => ({
         id: m.user_id,
         name: m.display_name,
         email: m.email,
         photo: m.photo_url,
+        validationStatus: m.validation_status || 'pending',
         assignedTo: m.assigned_to ? { id: m.assigned_to, name: m.assigned_name } : null,
       })),
     });
@@ -316,52 +334,158 @@ router.post('/:id/assign', authenticate, async (req, res) => {
     }
 
     // Asignación circular perfecta (shuffled[i] regala a shuffled[(i+1)%n])
-    // Cero auto-asignaciones garantizado para cualquier n >= 2
+    // Cero auto-asignaciones garantizado matemáticamente para cualquier n >= 2
     const assignments = [];
     for (let i = 0; i < n; i++) {
       const giver = shuffled[i];
       const receiver = shuffled[(i + 1) % n];
+      if (giver.user_id === receiver.user_id) {
+        throw new Error('Error matemático en el sorteo: auto-asignación detectada');
+      }
       assignments.push({ giver, receiver });
     }
 
     const update = db.prepare(
-      `UPDATE members SET assigned_to = ? WHERE group_id = ? AND user_id = ?`
+      `UPDATE members SET assigned_to = ?, validation_status = 'pending' WHERE group_id = ? AND user_id = ?`
     );
     const tx = db.transaction(() => {
       for (const { giver, receiver } of assignments) {
         update.run(receiver.user_id, id, giver.user_id);
       }
-      db.prepare(`UPDATE groups SET assigned = 1 WHERE id = ?`).run(id);
+      db.prepare(`UPDATE groups SET assigned = 1, emails_sent = 0 WHERE id = ?`).run(id);
     });
     tx();
 
-    // Enviar correos discretos y bonitos a todos los participantes
-    for (const { giver, receiver } of assignments) {
-      if (giver.email) {
-        sendAssignmentEmail({
-          giverEmail: giver.email,
-          giverName: giver.display_name,
-          receiverName: receiver.display_name,
-          receiverEmail: receiver.email,
-          groupName: group.name,
-          groupId: group.id,
-        }).catch((err) => console.error(`Error enviando email a ${giver.email}:`, err));
-      }
-    }
-
-    const emailConfigured = isEmailConfigured();
-
     res.json({
-      message: emailConfigured
-        ? '¡Sorteo realizado con éxito! Se han enviado los correos a los participantes.'
-        : '¡Sorteo realizado con éxito! (Aviso: los correos no se enviaron a las bandejas reales porque falta configurar las credenciales SMTP en server/.env).',
+      message: '¡Sorteo generado! Cada participante debe validar su asignación antes del envío final de los correos.',
       assigned: true,
       participantCount: n,
-      emailConfigured,
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al realizar el sorteo' });
+    res.status(500).json({ error: err.message || 'Error al realizar el sorteo' });
+  }
+});
+
+// Reiniciar sorteo de un grupo (solo el creador)
+router.post('/:id/reset', authenticate, (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(id);
+    if (!group) {
+      return res.status(404).json({ error: 'Grupo no encontrado' });
+    }
+    if (group.creator_id !== (req.user.id || req.user.uid)) {
+      return res.status(403).json({ error: 'Solo el creador puede reiniciar el sorteo' });
+    }
+
+    const tx = db.transaction(() => {
+      db.prepare(
+        `UPDATE members SET assigned_to = NULL, validation_status = 'pending' WHERE group_id = ?`
+      ).run(id);
+      db.prepare(`UPDATE groups SET assigned = 0, emails_sent = 0 WHERE id = ?`).run(id);
+    });
+    tx();
+
+    res.json({
+      message: 'Sorteo reiniciado correctamente. Ahora puedes volver a sortear o modificar participantes.',
+      assigned: false,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al reiniciar el sorteo' });
+  }
+});
+
+// Validar o rechazar asignación por parte de un participante
+router.post('/:id/validate', authenticate, async (req, res) => {
+  const { id } = req.params;
+  const { action } = req.body; // 'approve' | 'reject'
+  const userId = req.user.id || req.user.uid;
+
+  if (!['approve', 'reject'].includes(action)) {
+    return res.status(400).json({ error: 'Acción inválida. Debe ser approve o reject' });
+  }
+
+  try {
+    const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(id);
+    if (!group) {
+      return res.status(404).json({ error: 'Grupo no encontrado' });
+    }
+    if (!group.assigned) {
+      return res.status(400).json({ error: 'Aún no se ha realizado el sorteo en este grupo' });
+    }
+
+    const member = db
+      .prepare('SELECT * FROM members WHERE group_id = ? AND user_id = ?')
+      .get(id, userId);
+    if (!member) {
+      return res.status(403).json({ error: 'No eres miembro de este grupo' });
+    }
+
+    const newStatus = action === 'approve' ? 'approved' : 'rejected';
+    db.prepare(
+      `UPDATE members SET validation_status = ? WHERE group_id = ? AND user_id = ?`
+    ).run(newStatus, id, userId);
+
+    // Comprobar si TODOS los miembros han validado positivamente
+    const allMembers = db
+      .prepare('SELECT user_id, validation_status FROM members WHERE group_id = ?')
+      .all(id);
+
+    const allApproved =
+      allMembers.length >= 2 && allMembers.every((m) => m.validation_status === 'approved');
+
+    let emailsTriggered = false;
+
+    if (allApproved && !group.emails_sent) {
+      // Marcar correos como enviados
+      db.prepare(`UPDATE groups SET emails_sent = 1 WHERE id = ?`).run(id);
+      emailsTriggered = true;
+
+      // Obtener asignaciones completas con datos de email
+      const assignments = db
+        .prepare(`
+          SELECT m.user_id, u.display_name AS giver_name, u.email AS giver_email,
+                 au.display_name AS receiver_name, au.email AS receiver_email
+          FROM members m
+          JOIN users u ON u.id = m.user_id
+          JOIN users au ON au.id = m.assigned_to
+          WHERE m.group_id = ?
+        `)
+        .all(id);
+
+      for (const item of assignments) {
+        if (item.giver_email) {
+          sendAssignmentEmail({
+            giverEmail: item.giver_email,
+            giverName: item.giver_name,
+            receiverName: item.receiver_name,
+            receiverEmail: item.receiver_email,
+            groupName: group.name,
+            groupId: group.id,
+          }).catch((err) =>
+            console.error(`Error enviando email final a ${item.giver_email}:`, err)
+          );
+        }
+      }
+    }
+
+    res.json({
+      status: newStatus,
+      allApproved,
+      emailsTriggered,
+      message:
+        allApproved
+          ? '¡Todos los miembros han validado su asignación! Se han enviado los correos a todos los participantes 🎁'
+          : action === 'approve'
+          ? '¡Has validado tu asignación con éxito! Esperando a que el resto de participantes validen.'
+          : 'Has indicado que no te convence la asignación. El creador del grupo puede volver a sortear.',
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al procesar la validación' });
   }
 });
 
@@ -370,11 +494,17 @@ router.get('/:id/my-assignment', authenticate, (req, res) => {
   const { id } = req.params;
 
   try {
+    const group = db.prepare('SELECT assigned, emails_sent FROM groups WHERE id = ?').get(id);
+    if (!group) {
+      return res.status(404).json({ error: 'Grupo no encontrado' });
+    }
+
     const member = db
       .prepare(`
-        SELECT m.assigned_to, u.display_name AS assigned_name, u.email AS assigned_email
+        SELECT m.assigned_to, m.validation_status,
+               u.display_name AS assigned_name, u.email AS assigned_email
         FROM members m
-        JOIN users u ON u.id = m.assigned_to
+        LEFT JOIN users u ON u.id = m.assigned_to
         WHERE m.group_id = ? AND m.user_id = ?
       `)
       .get(id, req.user.id || req.user.uid);
@@ -385,6 +515,8 @@ router.get('/:id/my-assignment', authenticate, (req, res) => {
 
     res.json({
       assigned: true,
+      validationStatus: member.validation_status || 'pending',
+      emailsSent: Boolean(group.emails_sent),
       assignedTo: {
         id: member.assigned_to,
         name: member.assigned_name,

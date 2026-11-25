@@ -63,5 +63,11 @@ try {
 try {
   db.exec('ALTER TABLE users ADD COLUMN profile_completed INTEGER DEFAULT 0');
 } catch (e) {}
+try {
+  db.exec("ALTER TABLE members ADD COLUMN validation_status TEXT DEFAULT 'pending'");
+} catch (e) {}
+try {
+  db.exec("ALTER TABLE groups ADD COLUMN emails_sent INTEGER DEFAULT 0");
+} catch (e) {}
 
 module.exports = db;

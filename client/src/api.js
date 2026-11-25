@@ -51,6 +51,10 @@ export const api = {
     request(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' }, token),
   assignGroup: (token, id) =>
     request(`/groups/${id}/assign`, { method: 'POST' }, token),
+  resetGroup: (token, id) =>
+    request(`/groups/${id}/reset`, { method: 'POST' }, token),
+  validateAssignment: (token, id, action) =>
+    request(`/groups/${id}/validate`, { method: 'POST', body: JSON.stringify({ action }) }, token),
   getMyAssignment: (token, id) =>
     request(`/groups/${id}/my-assignment`, {}, token),
 };

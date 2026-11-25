@@ -13,6 +13,8 @@ export default function GroupPage() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [validating, setValidating] = useState(false);
   const [myAssignment, setMyAssignment] = useState(null);
 
   // Modal para añadir participante
@@ -66,7 +68,7 @@ export default function GroupPage() {
       const res = await api.assignGroup(token, id);
       setSuccess(
         res.message ||
-          '¡Sorteo realizado con éxito! Se ha enviado un correo electrónico discreto a cada participante.'
+          '¡Sorteo generado! Cada participante debe validar su asignación antes del envío final de correos.'
       );
       await loadGroup();
       await loadMyAssignment();
@@ -74,6 +76,41 @@ export default function GroupPage() {
       setError(err.message || 'No se pudo hacer la asignación del sorteo');
     } finally {
       setAssigning(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!window.confirm('¿Seguro que deseas reiniciar el sorteo? Se borrarán las asignaciones y las validaciones actuales para volver a empezar.')) {
+      return;
+    }
+    setError('');
+    setSuccess('');
+    setResetting(true);
+    try {
+      const res = await api.resetGroup(token, id);
+      setSuccess(res.message || 'Sorteo reiniciado correctamente.');
+      await loadGroup();
+      await loadMyAssignment();
+    } catch (err) {
+      setError(err.message || 'No se pudo reiniciar el sorteo');
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const handleValidate = async (action) => {
+    setError('');
+    setSuccess('');
+    setValidating(true);
+    try {
+      const res = await api.validateAssignment(token, id, action);
+      setSuccess(res.message || 'Validación registrada correctamente.');
+      await loadGroup();
+      await loadMyAssignment();
+    } catch (err) {
+      setError(err.message || 'No se pudo registrar la validación');
+    } finally {
+      setValidating(false);
     }
   };
 
@@ -278,21 +315,45 @@ export default function GroupPage() {
             </div>
 
             {/* Acciones principales del Creador */}
-            {isCreator && !group.assigned && (
-              <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+            {isCreator && (
+              <div className="flex flex-col sm:flex-row gap-2.5 shrink-0 flex-wrap">
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="btn-secondary sm:w-auto"
+                  className="btn-secondary sm:w-auto text-sm"
                 >
                   + Añadir participante
                 </button>
-                <button
-                  onClick={handleAssign}
-                  disabled={assigning || members.length < 2}
-                  className="btn-primary sm:w-auto"
-                >
-                  {assigning ? 'Realizando sorteo...' : '🎲 Realizar Sorteo Aleatorio'}
-                </button>
+
+                {!group.assigned ? (
+                  <button
+                    onClick={handleAssign}
+                    disabled={assigning || members.length < 2}
+                    className="btn-primary sm:w-auto text-sm"
+                  >
+                    {assigning ? 'Realizando sorteo...' : '🎲 Realizar Sorteo Aleatorio'}
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleAssign}
+                      disabled={assigning}
+                      className="px-4 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white shadow-md shadow-red-200 transition transform active:scale-95 disabled:opacity-50"
+                      title="Genera una nueva combinación aleatoria"
+                    >
+                      {assigning ? 'Sorteando...' : '🎲 Volver a sortear'}
+                    </button>
+
+                    <button
+                      onClick={handleReset}
+                      disabled={resetting}
+                      className="px-4 py-2.5 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      title="Reinicia el sorteo al estado inicial"
+                    >
+                      <span>🔄</span>
+                      <span>{resetting ? 'Reiniciando...' : 'Reiniciar sorteo'}</span>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -355,6 +416,72 @@ export default function GroupPage() {
                   Solo tú puedes ver este resultado. ¡Guarda el secreto hasta la entrega de regalos!
                 </span>
               </div>
+
+              {/* Bloque de validación individual */}
+              <div className="mt-6 pt-6 border-t border-red-200/60">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/90 p-4 sm:p-5 rounded-2xl border border-red-100 shadow-sm">
+                  <div>
+                    <h4 className="font-extrabold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                      <span>🗳️</span>
+                      <span>¿Confirmas tu asignación?</span>
+                    </h4>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-0.5 max-w-md">
+                      Una vez que todos los participantes pulsen <strong>"Validar"</strong>, se enviarán automáticamente los correos definitivos a cada uno.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                      onClick={() => handleValidate('approve')}
+                      disabled={validating}
+                      className={`flex-1 sm:flex-initial px-5 py-3 rounded-2xl font-bold text-sm transition transform active:scale-95 flex items-center justify-center gap-2 ${
+                        myAssignment.validationStatus === 'approved'
+                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200 ring-2 ring-emerald-600 ring-offset-2'
+                          : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-300'
+                      }`}
+                    >
+                      <span>👍</span>
+                      <span>
+                        {myAssignment.validationStatus === 'approved' ? 'Validado ✓' : 'Validar'}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => handleValidate('reject')}
+                      disabled={validating}
+                      className={`flex-1 sm:flex-initial px-5 py-3 rounded-2xl font-bold text-sm transition transform active:scale-95 flex items-center justify-center gap-2 ${
+                        myAssignment.validationStatus === 'rejected'
+                          ? 'bg-rose-600 text-white shadow-md shadow-rose-200 ring-2 ring-rose-600 ring-offset-2'
+                          : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border-2 border-rose-300'
+                      }`}
+                    >
+                      <span>👎</span>
+                      <span>
+                        {myAssignment.validationStatus === 'rejected'
+                          ? 'Rechazado ✕'
+                          : 'No me gusta'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {myAssignment.validationStatus === 'approved' && (
+                  <p className="text-xs text-emerald-700 font-semibold mt-2.5 flex items-center gap-1.5">
+                    <span>✓</span>
+                    <span>
+                      Has validado tu asignación. En cuanto todos los miembros validen, se enviarán los emails oficiales.
+                    </span>
+                  </p>
+                )}
+                {myAssignment.validationStatus === 'rejected' && (
+                  <p className="text-xs text-rose-700 font-semibold mt-2.5 flex items-center gap-1.5">
+                    <span>✕</span>
+                    <span>
+                      Has indicado que no te convence. El creador del grupo puede pulsar "Volver a sortear".
+                    </span>
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 sm:p-8 text-center sm:text-left space-y-4">
@@ -379,18 +506,82 @@ export default function GroupPage() {
                       disabled={assigning}
                       className="btn-primary sm:w-auto"
                     >
-                      {assigning ? 'Realizando sorteo...' : '🎲 Realizar Sorteo y Enviar Correos'}
+                      {assigning ? 'Realizando sorteo...' : '🎲 Realizar Sorteo Aleatorio'}
                     </button>
                   )}
                 </div>
               ) : (
                 <p className="text-slate-500 text-sm sm:text-base">
-                  El creador del grupo aún no ha iniciado el sorteo. En cuanto lo realice, recibirás un correo y verás aquí a quién te ha tocado.
+                  El creador del grupo aún no ha iniciado el sorteo. En cuanto lo realice, recibirás un aviso y verás aquí a quién te ha tocado para validar.
                 </p>
               )}
             </div>
           )}
         </div>
+
+        {/* Progreso Global de Validaciones */}
+        {group.assigned && group.validationStats && (
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <span className="text-xs uppercase font-extrabold text-slate-400 tracking-wider block mb-1">
+                  Progreso de Confirmación del Grupo
+                </span>
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                  <span>📊</span>
+                  <span>
+                    {group.validationStats.approved} de {group.validationStats.total} participantes han validado
+                  </span>
+                </h3>
+              </div>
+
+              {group.emails_sent ? (
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  ✉️ Correos oficiales enviados
+                </span>
+              ) : group.validationStats.allApproved ? (
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
+                  🎉 ¡100% Validado! Enviando correos...
+                </span>
+              ) : group.validationStats.rejected > 0 ? (
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                  ⚠️ {group.validationStats.rejected} participante(s) han pedido repetir
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  ⏳ Esperando validaciones
+                </span>
+              )}
+            </div>
+
+            {/* Barra de progreso visual */}
+            <div className="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden p-0.5 border border-slate-200">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  group.validationStats.rejected > 0
+                    ? 'bg-amber-500'
+                    : group.validationStats.allApproved
+                    ? 'bg-emerald-500'
+                    : 'bg-gradient-to-r from-red-500 to-rose-500'
+                }`}
+                style={{
+                  width: `${Math.round(
+                    (group.validationStats.approved / Math.max(group.validationStats.total, 1)) * 100
+                  )}%`,
+                }}
+              />
+            </div>
+
+            {group.emails_sent && (
+              <p className="text-xs sm:text-sm text-emerald-700 font-semibold mt-3 flex items-center gap-2">
+                <span>🎁</span>
+                <span>
+                  ¡Todo listo! Cada participante ha recibido su correo discreto con su asignación definitiva.
+                </span>
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Lista de Miembros */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
@@ -422,7 +613,10 @@ export default function GroupPage() {
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider">
                   <th className="px-5 py-3.5 rounded-l-xl">Nombre y Apellido</th>
                   <th className="px-5 py-3.5">Correo electrónico</th>
-                  <th className={`px-5 py-3.5 ${isCreator ? '' : 'rounded-r-xl'} text-right`}>Rol</th>
+                  <th className="px-5 py-3.5 text-right">Rol</th>
+                  {group.assigned && (
+                    <th className="px-5 py-3.5 text-center">Confirmación</th>
+                  )}
                   {isCreator && (
                     <th className="px-5 py-3.5 rounded-r-xl text-center">Acciones</th>
                   )}
@@ -466,6 +660,23 @@ export default function GroupPage() {
                           </span>
                         )}
                       </td>
+                      {group.assigned && (
+                        <td className="px-5 py-4 text-center">
+                          {m.validationStatus === 'approved' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              ✓ Validado
+                            </span>
+                          ) : m.validationStatus === 'rejected' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                              ✕ No conforme
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200">
+                              ⏳ Pendiente
+                            </span>
+                          )}
+                        </td>
+                      )}
                       {isCreator && (
                         <td className="px-5 py-4 text-center">
                           {!isMemberCreator ? (
