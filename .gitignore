@@ -16,6 +16,7 @@ build/
 .env.production.local
 client/.env
 server/.env
+ENVIRONMENT.md
 
 # Base de datos SQLite
 server/database.sqlite
