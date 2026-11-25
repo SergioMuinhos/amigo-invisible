@@ -146,6 +146,36 @@ router.put('/:id', authenticate, (req, res) => {
   }
 });
 
+// Eliminar un grupo completo (solo el creador)
+router.delete('/:id', authenticate, (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(id);
+    if (!group) {
+      return res.status(404).json({ error: 'Grupo no encontrado' });
+    }
+
+    const currentUserId = req.user.id || req.user.uid;
+    if (group.creator_id !== currentUserId) {
+      return res.status(403).json({ error: 'Solo el creador puede eliminar el grupo' });
+    }
+
+    const tx = db.transaction(() => {
+      // Eliminar los miembros del grupo
+      db.prepare('DELETE FROM members WHERE group_id = ?').run(id);
+      // Eliminar el grupo
+      db.prepare('DELETE FROM groups WHERE id = ?').run(id);
+    });
+    tx();
+
+    res.json({ message: 'Grupo eliminado correctamente' });
+  } catch (err) {
+    console.error('Error al eliminar grupo:', err);
+    res.status(500).json({ error: 'Error al eliminar el grupo' });
+  }
+});
+
 // Detalle de un grupo con sus miembros
 router.get('/:id', authenticate, (req, res) => {
   const { id } = req.params;

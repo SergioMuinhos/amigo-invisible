@@ -30,6 +30,7 @@ export default function GroupPage() {
   const [addError, setAddError] = useState('');
   const [deletingMemberId, setDeletingMemberId] = useState(null);
   const [resendingMemberId, setResendingMemberId] = useState(null);
+  const [deletingGroup, setDeletingGroup] = useState(false);
 
   // Notificaciones
   const [error, setError] = useState('');
@@ -118,6 +119,25 @@ export default function GroupPage() {
       setError(err.message || 'No se pudo reiniciar el sorteo');
     } finally {
       setResetting(false);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (
+      !window.confirm(
+        `⚠️ ¿Seguro que deseas eliminar el grupo "${group?.name || ''}"?\n\nEsta acción borrará a todos los participantes y los datos del sorteo de forma permanente. No se puede deshacer.`
+      )
+    ) {
+      return;
+    }
+    setDeletingGroup(true);
+    setError('');
+    try {
+      await api.deleteGroup(token, id);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'No se pudo eliminar el grupo');
+      setDeletingGroup(false);
     }
   };
 
@@ -453,6 +473,16 @@ export default function GroupPage() {
                     </button>
                   </>
                 )}
+
+                <button
+                  onClick={handleDeleteGroup}
+                  disabled={deletingGroup}
+                  className="px-3.5 py-2.5 rounded-xl font-bold text-sm bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  title="Eliminar este grupo definitivamente"
+                >
+                  <span>🗑️</span>
+                  <span>{deletingGroup ? 'Eliminando...' : 'Eliminar grupo'}</span>
+                </button>
               </div>
             )}
           </div>

@@ -108,6 +108,25 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteGroup = async (g) => {
+    if (
+      !window.confirm(
+        `⚠️ ¿Seguro que deseas eliminar el grupo "${g.name}"?\n\nEsta acción borrará a todos los participantes y sorteos de este grupo. No se puede deshacer.`
+      )
+    ) {
+      return;
+    }
+    setError('');
+    setSuccess('');
+    try {
+      const res = await api.deleteGroup(token, g.id);
+      setSuccess(res.message || 'Grupo eliminado correctamente');
+      await loadGroups();
+    } catch (err) {
+      setError(err.message || 'No se pudo eliminar el grupo');
+    }
+  };
+
   const handleCopyCode = (e, code) => {
     e.stopPropagation();
     navigator.clipboard.writeText(code);
@@ -423,20 +442,51 @@ export default function Dashboard() {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={(e) => handleCopyCode(e, g.code)}
-                      title="Copiar código de invitación"
-                      aria-label="Copiar código de invitación"
-                      className="p-2 text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-slate-100 rounded-lg transition border border-transparent hover:border-slate-200 flex items-center gap-1"
-                    >
-                      {isCopied ? (
-                        <>
-                          <span className="text-emerald-600">✓</span>
-                          <span className="text-emerald-600 text-xs font-bold">Copiado</span>
-                        </>
-                      ) : (
-                        <>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopyCode(e, g.code)}
+                        title="Copiar código de invitación"
+                        aria-label="Copiar código de invitación"
+                        className="p-2 text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-slate-100 rounded-lg transition border border-transparent hover:border-slate-200 flex items-center gap-1"
+                      >
+                        {isCopied ? (
+                          <>
+                            <span className="text-emerald-600">✓</span>
+                            <span className="text-emerald-600 text-xs font-bold">Copiado</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
+                            </svg>
+                            <span>Copiar</span>
+                          </>
+                        )}
+                      </button>
+
+                      {g.creator_id === (user?.id || user?.uid) && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteGroup(g);
+                          }}
+                          title="Eliminar grupo"
+                          aria-label="Eliminar grupo"
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                        >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="w-4 h-4"
@@ -448,13 +498,12 @@ export default function Dashboard() {
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                             />
                           </svg>
-                          <span>Copiar</span>
-                        </>
+                        </button>
                       )}
-                    </button>
+                    </div>
                   </div>
 
                   {/* Botón sutil de entrar */}
