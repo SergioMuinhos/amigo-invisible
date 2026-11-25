@@ -1,12 +1,13 @@
 <h1 align="center">🎁 Amigo Invisible</h1>
 <p align="center">
-  <strong>Sorteo de amigo invisible para grupos, con autenticación Firebase y listo para Docker + Portainer.</strong>
+  <strong>Sorteo de amigo invisible para grupos, con autenticación Firebase, notificaciones discretas por email y listo para Docker + Portainer.</strong>
 </p>
 
 <p align="center">
   <a href="https://github.com/SergioMuinhos/amigo-invisible/actions"><img src="https://img.shields.io/github/actions/status/SergioMuinhos/amigo-invisible/main?label=CI&style=flat-square" alt="CI"></a>
   <a href="https://github.com/SergioMuinhos/amigo-invisible/blob/main/LICENSE"><img src="https://img.shields.io/github/license/SergioMuinhos/amigo-invisible?style=flat-square" alt="License"></a>
-  <a href="https://hub.docker.com/r/sergiomuinhos/amigo-invisible"><img src="https://img.shields.io/docker/v/sergiomuinhos/amigo-invisible?style=flat-square" alt="Docker"></a>
+  <img src="https://img.shields.io/badge/Docker-Multi--Stage-blue?style=flat-square&logo=docker" alt="Docker">
+  <img src="https://img.shields.io/badge/Portainer-Stack-teal?style=flat-square&logo=portainer" alt="Portainer">
   <img src="https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react" alt="React 18">
   <img src="https://img.shields.io/badge/Firebase-Auth-orange?style=flat-square&logo=firebase" alt="Firebase Auth">
   <img src="https://img.shields.io/badge/SQLite-Database-lightgrey?style=flat-square&logo=sqlite" alt="SQLite">
@@ -17,63 +18,51 @@
 
 ## 📖 Sobre el proyecto
 
-**Amigo Invisible** es una aplicación web pensada para hacer sorteos de amigo invisible entre amigos, familia o compañeros de trabajo. Cada usuario puede:
+**Amigo Invisible** es una aplicación web moderna, accesible y completa pensada para organizar sorteos de amigo invisible entre familiares, amigos o compañeros de trabajo.
 
-- ✅ Iniciar sesión con **Google** o **usuario/contraseña** (Firebase Auth)
-- ✅ **Crear un grupo** (fiesta) y obtener un código único de invitación
-- ✅ **Unirse a un grupo** usando el código del creador
-- ✅ **Ver quiénes son los miembros** del grupo
-- ✅ **Asignar aleatoriamente** el amigo invisible (solo el creador)
-- ✅ **Consultar en privado** a quién le tocó (nadie más lo ve)
+### ✨ Funcionalidades principales
 
-Está diseñado para correr en un **contenedor Docker** y desplegarse fácilmente con **Portainer** en tu propio servidor.
+- ✅ **Autenticación flexible:** Inicio de sesión con **Google** o con **correo y contraseña** (Firebase Auth).
+- ✅ **Registro con Nombre y Apellidos:** Identificación clara de cada participante en los grupos, con prevención de correos duplicados.
+- ✅ **Gestión completa de grupos:**
+  - Crear grupos y generar códigos de invitación únicos.
+  - Unirse a grupos existentes mediante código.
+  - **Añadir participantes directamente** por nombre, apellidos y email (sin obligarles a registrarse previamente).
+  - **Eliminar participantes** (exclusivo para el creador del grupo), con reinicio automático y seguro del sorteo si ya se hubiera realizado.
+- ✅ **Sorteo aleatorio sin trampas:** Algoritmo que garantiza que a nadie le toque a sí mismo.
+- ✅ **Notificaciones por email discretas y elegantes:**
+  - Envío automático de correo a cada participante con su amigo asignado.
+  - **Asunto discreto** (ej. *"Tu amigo invisible ya ha sido asignado 🎁"*) sin revelar el nombre en la vista previa del buzón para mantener la sorpresa.
+  - Soporte de envío mediante **Gmail SMTP (SSL puerto 465)** y/o **Resend API**.
+- ✅ **Consulta privada en la web:** Cada usuario puede consultar en todo momento a quién le ha tocado desde su panel.
+- ✅ **100% Dockerizada y optimizada para Portainer:** Imagen multi-etapa con compilación nativa de SQLite, verificación de salud (`HEALTHCHECK`) y volumen persistente.
 
 ---
 
-## ♿ Accesibilidad para personas mayores
+## ♿ Accesibilidad y diseño para todos
 
-Esta aplicación está diseñada pensando en que **cualquier persona**, sin importar su edad o experiencia con la tecnología, pueda usarla sin dificultad.
-
-### Características de accesibilidad
+Esta aplicación ha sido diseñada con especial cuidado para que **cualquier persona**, independientemente de su edad o experiencia tecnológica, pueda utilizarla sin esfuerzo:
 
 | Característica | Beneficio |
-|--------------|-----------|
-| 🔤 **Texto grande** | Tamaño de fuente base de 18px, fácil de leer sin gafas |
-| 🔘 **Botones enormes** | Mínimo 60px de alto, fáciles de tocar con precisión |
-| 🎨 **Contraste alto** | Colores claros y nítidos para buena visibilidad |
-| ⌨️ **Navegación por teclado** | Indicador de foco muy visible (rojo intenso) |
-| 📱 **Pantallas táctiles** | Espaciado generoso entre elementos para evitar toques accidentales |
-| 🔇 **Sin movimiento innecesario** | Respeta la preferencia de "reducir movimiento" del sistema |
-| 🗣️ **Lenguaje sencillo** | Botones y mensajes con texto claro, sin iconos crípticos solos |
-| ♿ **Lectores de pantalla** | Etiquetas ARIA en todos los botones y campos |
-
-### Principios de diseño
-
-- **Un solo objetivo por pantalla:** Cada vista tiene una acción principal clara.
-- **Texto descriptivo:** Los botones dicen exactamente qué hacen (ej. "Crear grupo", no solo "+").
-- **Feedback inmediato:** Mensajes de éxito y error con iconos (✅ / ❌) y colores claros.
-- **Nunca solo iconos:** Los botones siempre tienen texto acompañante.
-- **Volver atrás evidente:** Botón de "Volver" visible en todas las pantallas internas.
-
-## 📱 Capturas
-
-> Puedes añadir capturas de pantalla aquí.  
-> Ejemplo:
-> - `docs/login.png` – Pantalla de inicio de sesión
-> - `docs/dashboard.png` – Lista de grupos
-> - `docs/grupo.png` – Detalle del grupo y asignación
+|---|---|
+| 🔤 **Tipografía legible** | Fuente base generosa, clara y fácil de leer sin fatiga visual. |
+| 🔘 **Botones amplios** | Áreas táctiles grandes (mínimo 50-60px), pensadas para móviles y pantallas táctiles. |
+| 🎨 **Contraste visual óptimo** | Paleta de colores cuidada con alto contraste y estados visuales nítidos. |
+| 🗣️ **Lenguaje directo** | Botones con textos explicativos acompañados de iconos comprensibles. |
+| 🛡️ **Feedback interactivo** | Notificaciones claras (toasts) tras cada acción: sorteo, invitaciones, eliminaciones o avisos de configuración. |
 
 ---
 
 ## 🛠️ Stack tecnológico
 
 | Capa | Tecnología |
-|------|------------|
-| **Frontend** | React 18 + Vite + Tailwind CSS |
-| **Autenticación** | Firebase Auth (Google + Email/Password) |
-| **Backend** | Node.js + Express |
-| **Base de datos** | SQLite (archivo único, volumen persistente) |
-| **Despliegue** | Docker + Portainer |
+|---|---|
+| **Frontend** | React 18, Vite, Tailwind CSS, Lucide Icons |
+| **Autenticación** | Firebase Authentication (Google Identity Provider + Password) |
+| **Backend** | Node.js, Express, Firebase Admin SDK |
+| **Base de datos** | SQLite (`better-sqlite3`) persistida en volumen Docker |
+| **Servicio de correo** | Nodemailer (Gmail SSL) + SDK oficial de Resend |
+| **Despliegue** | Docker (Multi-stage build) y Portainer Stacks |
 
 ---
 
@@ -81,30 +70,34 @@ Esta aplicación está diseñada pensando en que **cualquier persona**, sin impo
 
 ```
 amigo-invisible/
-├── client/                 # Frontend (React + Vite)
+├── client/                     # Frontend (React 18 + Vite + Tailwind)
 │   ├── src/
-│   │   ├── firebaseConfig.js
-│   │   ├── api.js
-│   │   ├── context/AuthContext.jsx
-│   │   ├── App.jsx
-│   │   ├── index.css
-│   │   └── pages/
-│   │       ├── LoginPage.jsx
-│   │       ├── Dashboard.jsx
-│   │       └── GroupPage.jsx
+│   │   ├── api.js              # Cliente HTTP Axios centralizado
+│   │   ├── firebaseConfig.js   # Inicialización de Firebase Web SDK
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx # Estado global de autenticación
+│   │   ├── pages/
+│   │   │   ├── LoginPage.jsx   # Login y registro con validación
+│   │   │   ├── Dashboard.jsx   # Panel de grupos y creación modal
+│   │   │   └── GroupPage.jsx   # Gestión de miembros, sorteo y asignación
+│   │   └── App.jsx
 │   ├── .env.example
-│   ├── tailwind.config.js
 │   └── vite.config.js
-├── server/                 # Backend (Node.js + Express)
-│   ├── server.js
-│   ├── db.js
-│   ├── middleware/auth.js
-│   │   ├── routes/auth.js
-│   │   └── routes/groups.js
-│   ├── .env.example
-│   └── package.json
-├── Dockerfile              # Imagen Docker multi-etapa
-├── docker-compose.yml      # Listo para Portainer
+├── server/                     # Backend (Node.js + Express)
+│   ├── config/
+│   ├── middleware/
+│   │   └── auth.js             # Verificación de tokens Firebase Admin
+│   ├── routes/
+│   │   ├── auth.js             # Sincronización de perfiles
+│   │   └── groups.js           # Lógica de grupos, sorteo y eliminación
+│   ├── services/
+│   │   └── mailer.js           # Servicio de email dual (Gmail SSL / Resend)
+│   ├── db.js                   # Esquema y conexión SQLite
+│   ├── server.js               # Servidor Express y health check
+│   └── .env.example
+├── Dockerfile                  # Build multi-etapa con dependencias nativas
+├── docker-compose.yml          # Compose listo para Portainer Stacks
+├── vars.env.example            # Plantilla completa de variables para Portainer
 ├── .dockerignore
 ├── .gitignore
 └── README.md
@@ -112,224 +105,143 @@ amigo-invisible/
 
 ---
 
-## 🚀 Inicio rápido (desarrollo local)
+## 🐳 Despliegue con Portainer (Recomendado)
 
-### 1. Clona el repositorio
+El proyecto está diseñado para desplegarse en cuestión de minutos usando **Portainer Stacks**:
 
-```bash
-git clone https://github.com/SergioMuinhos/amigo-invisible.git
-cd amigo-invisible
-```
+### Pasos:
 
-### 2. Configura Firebase
-
-Crea un proyecto en [Firebase Console](https://console.firebase.google.com) y habilita:
-- **Authentication > Sign-in method:** Google y Email/Password
-
-Copia los archivos de ejemplo y rellénalos:
-
-```bash
-cp client/.env.example client/.env
-cp server/.env.example server/.env
-```
-
-Edita `client/.env` con los datos de tu aplicación web de Firebase.
-
-### 3. Instala dependencias
-
-```bash
-# Backend
-cd server
-npm install
-
-# Frontend (nueva terminal)
-cd ../client
-npm install
-```
-
-### 4. Ejecuta en desarrollo
-
-```bash
-# Terminal 1 - Backend (puerto 3001)
-cd server
-npm run dev
-
-# Terminal 2 - Frontend (puerto 5173)
-cd client
-npm run dev
-```
-
-Abre [http://localhost:5173](http://localhost:5173).
-
----
-
-## 🐳 Despliegue con Docker + Portainer
-
-### Opción A: Desplegar desde GitHub en Portainer
-
-1. Entra a tu Portainer.
+1. Entra en tu panel de **Portainer**.
 2. Ve a **Stacks** > **Add stack**.
-3. Nombra el stack: `amigo-invisible`.
-4. Elige **Git** como origen:
+3. Asigna un nombre al stack (ejemplo: `amigo-invisible`).
+4. Selecciona el método de compilación **Repository**:
    - **Repository URL:** `https://github.com/SergioMuinhos/amigo-invisible.git`
-   - **Branch:** `main`
-   - **Compose file path:** `docker-compose.yml`
-5. Añade las variables de entorno (ver tabla abajo).
+   - **Repository reference:** `refs/heads/main`
+   - **Compose path:** `docker-compose.yml`
+5. En la sección **Environment variables**, selecciona el modo avanzado o copia y pega el contenido de [vars.env.example](vars.env.example) con tus credenciales reales (ver apartado siguiente).
 6. Haz clic en **Deploy the stack**.
-
-### Opción B: Desplegar manualmente con docker-compose
-
-```bash
-git clone https://github.com/SergioMuinhos/amigo-invisible.git
-cd amigo-invisible
-
-# Configura variables de entorno
-cp server/.env.example server/.env
-# Edita server/.env con tus claves de Firebase
-
-docker-compose up -d
-```
-
-La aplicación estará disponible en `http://tu-servidor:3000`.
+7. ¡Listo! Accede a tu aplicación en `http://tu-servidor:3000`.
 
 ---
 
-## ⚙️ Variables de entorno
+## ⚙️ Variables de entorno para Portainer
 
-### Backend (`server/.env`)
-
-| Variable | Descripción | Ejemplo |
-|----------|-------------|---------|
-| `PORT` | Puerto del contenedor | `3000` |
-| `FIREBASE_PROJECT_ID` | ID del proyecto Firebase | `mi-proyecto-123` |
-| `FIREBASE_CLIENT_EMAIL` | Email de la Service Account | `firebase-adminsdk-xxx@proyecto.iam.gserviceaccount.com` |
-| `FIREBASE_PRIVATE_KEY` | Clave privada (con `\n`) | `-----BEGIN PRIVATE KEY-----...` |
-| `DB_PATH` | Ruta de la base de datos SQLite | `/data/database.sqlite` |
-
-### Frontend (`client/.env`)
-
-| Variable | Descripción |
-|----------|-------------|
-| `VITE_FIREBASE_API_KEY` | API Key de Firebase |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Dominio de autenticación |
-| `VITE_FIREBASE_PROJECT_ID` | ID del proyecto |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Bucket de almacenamiento |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | ID del remitente |
-| `VITE_FIREBASE_APP_ID` | ID de la app |
-| `VITE_API_BASE` | URL base de la API (`/api` en Docker) |
-
-> 🔒 **Nunca subas los archivos `.env` a GitHub.** Están incluidos en `.gitignore`.
-
----
-
-## 🔑 Configurar Firebase Service Account (para el backend)
-
-1. Ve a [Firebase Console](https://console.firebase.google.com) > tu proyecto.
-2. **Configuración del proyecto** > **Cuentas de servicio**.
-3. Haz clic en **Generar nueva clave privada**.
-4. Descarga el archivo JSON.
-5. Copia los valores en `server/.env`:
-   - `project_id` → `FIREBASE_PROJECT_ID`
-   - `client_email` → `FIREBASE_CLIENT_EMAIL`
-   - `private_key` → `FIREBASE_PRIVATE_KEY` (incluye los saltos de línea `\n`)
-
----
-
-## 📋 Variables de entorno (copiar y pegar)
-
-Crea los archivos `.env` en tu computadora, pega estos bloques y modifica los valores con tus datos de Firebase.
-
-### 📁 `server/.env`
+Puedes copiar y pegar este bloque directamente en el editor de variables de Portainer:
 
 ```env
-# Puerto del servidor (cambia si el 3000 está ocupado)
+# Puerto en el host (ej. 3000 u 80)
 PORT=3000
 
-# Ruta de la base de datos SQLite
-DB_PATH=/data/database.sqlite
+# URL pública de tu aplicación (para enlaces generados en los correos)
+APP_URL=http://tu-servidor:3000
 
-# ========================
-# Firebase Admin SDK (Backend)
-# Obtén estos valores en: Firebase Console > Configuración del proyecto > Cuentas de servicio
-# ========================
-FIREBASE_PROJECT_ID=TU_PROYECTO_ID
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@TU_PROYECTO.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nTU_CLAVE_PRIVADA_AQUÍ\n-----END PRIVATE KEY-----\n"
-```
-
-### 📁 `client/.env`
-
-```env
-# ========================
-# Firebase Web App (Frontend)
-# Obtén estos valores en: Firebase Console > Configuración del proyecto > General > Tus aplicaciones > Web </>
-# ========================
-VITE_FIREBASE_API_KEY=TU_API_KEY
-VITE_FIREBASE_AUTH_DOMAIN=TU_PROYECTO.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=TU_PROYECTO_ID
-VITE_FIREBASE_STORAGE_BUCKET=TU_PROYECTO.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=TU_MESSAGING_SENDER_ID
-VITE_FIREBASE_APP_ID=1:TU_MESSAGING_SENDER_ID:web:TU_APP_ID
-
-# URL de la API (en Docker usa /api porque el mismo contenedor sirve frontend y backend)
+# ------------------------------------------------------------------------------
+# FRONTEND: Firebase Web App (Firebase Console > Configuración del Proyecto)
+# ------------------------------------------------------------------------------
+VITE_FIREBASE_API_KEY=AIzaSy...
+VITE_FIREBASE_AUTH_DOMAIN=tu-proyecto.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=tu-proyecto
+VITE_FIREBASE_STORAGE_BUCKET=tu-proyecto.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789012
+VITE_FIREBASE_APP_ID=1:123456789012:web:abcdef123456
 VITE_API_BASE=/api
+
+# ------------------------------------------------------------------------------
+# BACKEND: Firebase Admin SDK (Cuentas de servicio > Generar clave privada)
+# ------------------------------------------------------------------------------
+FIREBASE_PROJECT_ID=tu-proyecto
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@tu-proyecto.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nTU_CLAVE_AQUI\n-----END PRIVATE KEY-----\n"
+
+# ------------------------------------------------------------------------------
+# ENVÍO DE CORREOS: Opción A - Gmail (Recomendado)
+# Requiere cuenta Google con verificación en dos pasos y 'Contraseña de aplicación'
+# ------------------------------------------------------------------------------
+SMTP_SERVICE=gmail
+SMTP_USER=tu_correo@gmail.com
+SMTP_PASS=tu_contraseña_de_aplicacion_16_caracteres
+SMTP_FROM=tu_correo@gmail.com
+
+# ------------------------------------------------------------------------------
+# ENVÍO DE CORREOS: Opción B - Resend API (Opcional como fallback o alternativa)
+# ------------------------------------------------------------------------------
+# RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
+# EMAIL_FROM=Amigo Invisible <onboarding@resend.dev>
 ```
 
-### ⚠️ Important
-
-- **No subas estos archivos a GitHub.** Ya están en el `.gitignore`.
-- Configura los mismos valores en **Portainer > Stacks > amigo-invisible > Environment variables**.
-- La `FIREBASE_PRIVATE_KEY` debe incluir los saltos de línea `\n` tal como aparecen en el archivo JSON que descargas de Firebase.
-- Si cambias el `PORT`, recuerda actualizar también el `docker-compose.yml` y el puerto que exposes en Portainer.
+> 🔒 **Nota de seguridad:** Nunca subas tus archivos `.env` o `vars.env` con contraseñas a GitHub. Ya están incluidos en el `.gitignore`.
 
 ---
 
-## 📌 Cómo usar la aplicación
+## 🔑 Obtención de credenciales
 
-1. Regístrate o inicia sesión con Google o email/contraseña.
-2. Crea un grupo y anota el **código de invitación**.
-3. Comparte el código con tus amigos para que se unan.
-4. Cuando todos estén dentro, el **creador** pulsa "Hacer asignación aleatoria".
-5. Cada miembro entra al grupo y ve en privado **a quién le tocó**. 🎁
+### 1. Firebase (Autenticación)
+1. Ve a [Firebase Console](https://console.firebase.google.com/) y crea un proyecto.
+2. En **Autenticación** > **Sign-in method**, activa **Google** y **Correo/Contraseña**.
+3. En **Configuración del proyecto > General**, añade una aplicación Web (`</>`) y copia las claves para el frontend (`VITE_FIREBASE_*`).
+4. En **Configuración del proyecto > Cuentas de servicio**, haz clic en **Generar nueva clave privada** para descargar el archivo JSON con las credenciales del backend (`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`).
 
----
-
-## 🗺️ Roadmap
-
-- [ ] Notificaciones por email cuando se hace la asignación
-- [ ] Editar y eliminar grupos
-- [ ] Historial de sorteos anteriores
-- [ ] Tema oscuro
-- [ ] Soporte para múltiples idiomas (i18n)
-- [ ] Imagen de perfil personalizable
+### 2. Gmail SMTP (Para enviar los correos)
+1. Inicia sesión en tu cuenta de Google y ve a [Seguridad de Google](https://myaccount.google.com/security).
+2. Asegúrate de tener activada la **Verificación en 2 pasos**.
+3. Busca **Contraseñas de aplicaciones**.
+4. Genera una contraseña para "Amigo Invisible" (obtendrás un código de 16 letras, ej. `abcd efgh ijkl mnop`).
+5. Configura `SMTP_USER=tu_correo@gmail.com` y `SMTP_PASS=abcdefghijklmnop`.
 
 ---
 
-## 🤝 Contribuir
+## 💻 Desarrollo local
 
-Las contribuciones son bienvenidas. Si quieres mejorar el proyecto:
+Si prefieres ejecutar el proyecto en tu máquina sin Docker:
 
-1. Haz un **fork** del repositorio.
-2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
-3. Haz tus cambios y commit: `git commit -m "feat: descripción"`
-4. Sube tu rama: `git push origin feature/nueva-funcionalidad`
-5. Abre un **Pull Request**.
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/SergioMuinhos/amigo-invisible.git
+cd amigo-invisible
+
+# 2. Configurar variables de entorno
+cp client/.env.example client/.env
+cp server/.env.example server/.env
+# Rellena los archivos con tus credenciales
+
+# 3. Instalar dependencias
+cd server && npm install
+cd ../client && npm install
+
+# 4. Iniciar en desarrollo
+# Terminal 1 (Backend):
+cd server && npm run dev
+# Terminal 2 (Frontend):
+cd client && npm run dev
+```
+
+Abre [http://localhost:5173](http://localhost:5173) en tu navegador.
+
+---
+
+## 🗺️ Estado del proyecto & Roadmap
+
+- [x] Autenticación con Google y Email/Contraseña.
+- [x] Registro con nombre y apellidos y comprobación de correos duplicados.
+- [x] Creación de grupos con código de invitación único.
+- [x] Añadir participantes manualmente al grupo.
+- [x] Eliminación de participantes exclusiva para el creador del grupo.
+- [x] Sorteo aleatorio garantizado (nadie se autotoca).
+- [x] Notificaciones por email elegantes y discretas (sin desvelar la asignación en el asunto).
+- [x] Soporte dual de email: Gmail SMTP (SSL) + Resend API.
+- [x] Contenedor Docker multi-stage optimizado con SQLite nativo y Healthcheck.
+- [x] Soporte nativo para despliegue en Portainer Stacks.
+- [ ] Exportación de resultados o lista de participantes a PDF/Excel.
+- [ ] Listas de deseos / sugerencias de regalo por participante.
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más información.
-
----
-
-## ✉️ Contacto
-
-Hecho por [SergioMuinhos](https://github.com/SergioMuinhos).  
-Si tienes dudas o sugerencias, abre un [issue](https://github.com/SergioMuinhos/amigo-invisible/issues) en GitHub.
+Este proyecto está bajo la Licencia [MIT](LICENSE).
 
 ---
 
 <p align="center">
-  <b>¡Feliz sorteo de amigo invisible! 🎄🎁</b>
+  Hecho con ❤️ por <a href="https://github.com/SergioMuinhos">SergioMuinhos</a>
 </p>
