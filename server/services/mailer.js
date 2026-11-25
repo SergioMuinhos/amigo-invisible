@@ -10,7 +10,11 @@ function getSmtpTransporter() {
   const host = process.env.SMTP_HOST;
   const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465;
   const user = process.env.SMTP_USER || process.env.GMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
+  let pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
+  if (pass && (process.env.SMTP_SERVICE === 'gmail' || (user && user.endsWith('@gmail.com')))) {
+    // Si es Gmail y tiene espacios (formato típico de Google 'xxxx yyyy zzzz wwww'), los quitamos
+    pass = pass.replace(/\s+/g, '');
+  }
 
   if (user && pass) {
     if (process.env.SMTP_SERVICE === 'gmail' || (!host && user.endsWith('@gmail.com'))) {
@@ -46,7 +50,11 @@ function getResendClient() {
 
 function isEmailConfigured() {
   const user = process.env.SMTP_USER || process.env.GMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
+  let pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
+  if (pass && (process.env.SMTP_SERVICE === 'gmail' || (user && user.endsWith('@gmail.com')))) {
+    // Si es Gmail y tiene espacios (formato típico de Google 'xxxx yyyy zzzz wwww'), los quitamos
+    pass = pass.replace(/\s+/g, '');
+  }
   if (user && pass) return true;
   if (process.env.RESEND_API_KEY) return true;
   return false;

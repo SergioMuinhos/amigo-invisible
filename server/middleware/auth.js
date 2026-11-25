@@ -9,13 +9,15 @@ try {
     process.env.FIREBASE_CLIENT_EMAIL &&
     process.env.FIREBASE_PRIVATE_KEY
   ) {
-    adminApp = admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      }),
-    });
+      // Limpiar comillas exteriores y normalizar saltos de línea \n
+      const rawKey = process.env.FIREBASE_PRIVATE_KEY.trim().replace(/^["']|["']$/g, '');
+      adminApp = admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: rawKey.replace(/\\n/g, '\n'),
+        }),
+      });
   }
 } catch (err) {
   console.warn('Firebase Admin no configurado:', err.message);

@@ -8,12 +8,14 @@ yarn-error.log*
 client/dist/
 build/
 
-# Entorno (NUNCA subas estos archivos con claves reales)
+# Entorno y Secretos (NUNCA subir a GitHub archivos con claves reales)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+vars.env
+vars.env.*
+!vars.env.example
+*.env
 client/.env
 server/.env
 ENVIRONMENT.md
@@ -32,6 +34,3 @@ server/database.sqlite
 # Logs
 logs/
 *.log
-
-# Docker
-.dockerignore
