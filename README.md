@@ -235,6 +235,55 @@ La aplicación estará disponible en `http://tu-servidor:3000`.
 
 ---
 
+## 📋 Variables de entorno (copiar y pegar)
+
+Crea los archivos `.env` en tu computadora, pega estos bloques y modifica los valores con tus datos de Firebase.
+
+### 📁 `server/.env`
+
+```env
+# Puerto del servidor (cambia si el 3000 está ocupado)
+PORT=3000
+
+# Ruta de la base de datos SQLite
+DB_PATH=/data/database.sqlite
+
+# ========================
+# Firebase Admin SDK (Backend)
+# Obtén estos valores en: Firebase Console > Configuración del proyecto > Cuentas de servicio
+# ========================
+FIREBASE_PROJECT_ID=TU_PROYECTO_ID
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@TU_PROYECTO.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nTU_CLAVE_PRIVADA_AQUÍ\n-----END PRIVATE KEY-----\n"
+```
+
+### 📁 `client/.env`
+
+```env
+# ========================
+# Firebase Web App (Frontend)
+# Obtén estos valores en: Firebase Console > Configuración del proyecto > General > Tus aplicaciones > Web </>
+# ========================
+VITE_FIREBASE_API_KEY=TU_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN=TU_PROYECTO.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=TU_PROYECTO_ID
+VITE_FIREBASE_STORAGE_BUCKET=TU_PROYECTO.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=TU_MESSAGING_SENDER_ID
+VITE_FIREBASE_APP_ID=1:TU_MESSAGING_SENDER_ID:web:TU_APP_ID
+
+# URL de la API (en Docker usa /api porque el mismo contenedor sirve frontend y backend)
+VITE_API_BASE=/api
+```
+
+### ⚠️ Important
+
+- **No subas estos archivos a GitHub.** Ya están en el `.gitignore`.
+- Configura los mismos valores en **Portainer > Stacks > amigo-invisible > Environment variables**.
+- La `FIREBASE_PRIVATE_KEY` debe incluir los saltos de línea `\n` tal como aparecen en el archivo JSON que descargas de Firebase.
+- Si cambias el `PORT`, recuerda actualizar también el `docker-compose.yml` y el puerto que exposes en Portainer.
+
+---
+
 ## 📌 Cómo usar la aplicación
 
 1. Regístrate o inicia sesión con Google o email/contraseña.
