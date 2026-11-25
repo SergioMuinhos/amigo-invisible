@@ -13,8 +13,9 @@ router.get('/', authenticate, (req, res) => {
   try {
     const groups = db
       .prepare(`
-        SELECT g.id, g.name, g.code, g.assigned, g.created_at,
-               u.display_name AS creator_name
+        SELECT g.id, g.name, g.code, g.assigned, g.created_at, g.creator_id,
+               u.display_name AS creator_name,
+               (SELECT COUNT(*) FROM members WHERE group_id = g.id) AS member_count
         FROM groups g
         JOIN members m ON m.group_id = g.id
         JOIN users u ON u.id = g.creator_id

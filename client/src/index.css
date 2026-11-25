@@ -29,14 +29,12 @@ body {
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
 
-/* Áreas táctiles enormes para mayor precisión */
+/* Áreas táctiles cómodas y accesibles */
 button,
 a,
 [role="button"],
 input,
 select {
-  min-height: 60px;
-  min-width: 60px;
   touch-action: manipulation;
 }
 
@@ -87,21 +85,24 @@ input, select, textarea {
 }
 
 .card {
-  @apply bg-white rounded-2xl border border-gray-300 shadow-sm p-6 sm:p-8;
+  @apply bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-7;
 }
 
 .btn-primary {
-  @apply w-full py-5 px-6 bg-red-600 hover:bg-red-700 text-white font-bold text-lg rounded-2xl transition active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center gap-2 py-3.5 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold text-base sm:text-lg rounded-xl transition duration-150 shadow-sm hover:shadow active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  min-height: 48px;
 }
 
 .btn-secondary {
-  @apply w-full py-5 px-6 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-lg rounded-2xl transition active:scale-[0.98];
+  @apply inline-flex items-center justify-center gap-2 py-3.5 px-6 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-semibold text-base sm:text-lg rounded-xl transition duration-150 shadow-sm hover:shadow active:scale-[0.98];
+  min-height: 48px;
 }
 
 .input-field {
-  @apply w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-red-500 focus:border-red-500 outline-none text-lg sm:text-xl transition;
+  @apply w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-4 focus:ring-red-100 focus:border-red-600 outline-none text-base sm:text-lg transition bg-white text-gray-900;
+  min-height: 48px;
 }
 
 .label-field {
-  @apply block text-lg font-semibold text-gray-800 mb-2.5;
+  @apply block text-sm sm:text-base font-semibold text-gray-700 mb-2;
 }

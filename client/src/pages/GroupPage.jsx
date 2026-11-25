@@ -70,8 +70,10 @@ export default function GroupPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
-          <p className="text-xl text-gray-600">Cargando grupo...</p>
+          <div className="text-4xl sm:text-5xl mb-4">⏳</div>
+          <p className="text-xl sm:text-2xl text-gray-600">
+            Cargando grupo...
+          </p>
         </div>
       </div>
     );
@@ -81,8 +83,8 @@ export default function GroupPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="text-4xl mb-4">❌</div>
-          <h1 className="text-2xl font-bold text-red-600 mb-2">
+          <div className="text-4xl sm:text-5xl mb-4">❌</div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-red-600 mb-2">
             {error || 'Grupo no encontrado'}
           </h1>
           <button
@@ -107,7 +109,7 @@ export default function GroupPage() {
               aria-label="Volver a grupos"
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
             >
-              <span className="text-2xl">←</span>
+              <span className="text-xl sm:text-2xl">←</span>
               <span className="hidden sm:inline text-lg font-medium">Volver</span>
             </button>
 
@@ -159,13 +161,14 @@ export default function GroupPage() {
         </div>
       )}
 
-      <div className="page-container max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto py-6 sm:py-10 px-4 sm:px-6 lg:px-8 safe-bottom">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
             {group.name}
           </h1>
           <p className="text-gray-600 text-lg">
-            🔑 Código del grupo: <span className="font-mono font-bold text-gray-800">{group.code}</span>
+            🔑 Código del grupo:
+            <span className="font-mono font-bold text-gray-800">{group.code}</span>
           </p>
         </div>
 
@@ -181,35 +184,37 @@ export default function GroupPage() {
           </div>
         )}
 
-        {/* Tu amigo invisible - lo más importante */}
+        {/* Tu amigo invisible */}
         <div className="card mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center sm:text-left">
             🎁 Tu amigo invisible
           </h2>
           {myAssignment?.assigned && myAssignment?.assignedTo ? (
-            <div className="text-center space-y-4">
-              <p className="text-lg text-gray-600">
-                Te ha tocado regalarle a:
-              </p>
-              <div className="inline-block p-6 bg-red-50 border-4 border-red-200 rounded-3xl">
-                <div className="text-4xl sm:text-5xl font-bold text-red-600 mb-2">
-                  {myAssignment.assignedTo.name}
+            <div className="space-y-6 sm:flex sm:items-center sm:justify-between gap-6">
+              <div>
+                <p className="text-lg text-gray-600 mb-2">
+                  Te ha tocado regalarle a:
+                </p>
+                <div className="inline-block p-6 sm:p-8 bg-red-50 border-4 border-red-200 rounded-3xl">
+                  <div className="text-4xl sm:text-5xl font-bold text-red-600 mb-2">
+                    {myAssignment.assignedTo.name}
+                  </div>
+                  <p className="text-lg sm:text-xl text-gray-600">
+                    {myAssignment.assignedTo.email}
+                  </p>
                 </div>
-                <p className="text-lg text-gray-600">
-                  {myAssignment.assignedTo.email}
+                <p className="text-lg sm:text-xl text-gray-500 mt-4">
+                  Solo tú puedes ver esta información. ¡Es un secreto!
                 </p>
               </div>
-              <p className="text-lg text-gray-500">
-                Solo tú puedes ver esta información. ¡Es un secreto!
-              </p>
             </div>
           ) : (
-            <div className="text-center space-y-4 py-8">
+            <div className="text-center sm:text-left space-y-4 py-8">
               <p className="text-lg text-gray-600">
                 Aún no se ha hecho el sorteo
               </p>
               {group.assigned && (
-                <p className="text-lg text-red-500">
+                <p className="text-lg sm:text-xl text-red-500">
                   El creador aún no ha asignado los amigos invisibles
                 </p>
               )}
@@ -217,18 +222,18 @@ export default function GroupPage() {
                 <button
                   onClick={handleAssign}
                   disabled={assigning}
-                  className="btn-primary"
+                  className="btn-primary w-full sm:w-auto"
                 >
                   {assigning ? 'Asignando...' : 'Hacer sorteo aleatorio'}
                 </button>
               )}
               {!group.assigned && !isCreator && (
-                <p className="text-lg text-gray-500">
+                <p className="text-lg sm:text-xl text-gray-500">
                   Espera a que el creador del grupo haga el sorteo
                 </p>
               )}
               {!group.assigned && members.length < 2 && (
-                <p className="text-lg text-gray-500">
+                <p className="text-lg sm:text-xl text-gray-500">
                   Se necesitan al menos 2 personas para hacer el sorteo
                 </p>
               )}
@@ -252,7 +257,7 @@ export default function GroupPage() {
         {/* Miembros */}
         <div className="card">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
               👥 Miembros ({members.length})
             </h2>
             {!isCreator && (
@@ -262,10 +267,11 @@ export default function GroupPage() {
             )}
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop: tabla normal, Mobile: scroll horizontal */}
+          <div className="overflow-x-auto md:overflow-visible">
             <table className="w-full text-left border-collapse min-w-full">
               <thead>
-                <tr className="border-b-2 border-gray-200 bg-gray-50">
+                <tr className="border-b-2 border-gray-200 bg-gray-50 sticky top-0 md:sticky-relative">
                   <th className="px-6 py-4 text-left text-lg font-bold text-gray-600 uppercase">
                     Nombre
                   </th>
@@ -285,7 +291,7 @@ export default function GroupPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-200 flex items-center justify-center text-lg sm:text-xl font-bold">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-200 flex items-center justify-center text-lg sm:text-xl font-bold">
                           {m.name?.charAt(0)?.toUpperCase()}
                         </div>
                         <span className="text-lg font-medium text-gray-800">
