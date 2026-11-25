@@ -25,6 +25,7 @@ db.exec(`
     last_name TEXT,
     profile_completed INTEGER DEFAULT 0,
     photo_url TEXT,
+    is_registered INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -68,6 +69,18 @@ try {
 } catch (e) {}
 try {
   db.exec("ALTER TABLE groups ADD COLUMN emails_sent INTEGER DEFAULT 0");
+} catch (e) {}
+try {
+  db.exec('ALTER TABLE users ADD COLUMN is_registered INTEGER DEFAULT 0');
+} catch (e) {}
+try {
+  db.exec(`
+    UPDATE users 
+    SET is_registered = 1 
+    WHERE profile_completed = 1 
+       OR (photo_url IS NOT NULL AND photo_url != '') 
+       OR id IN (SELECT creator_id FROM groups)
+  `);
 } catch (e) {}
 
 module.exports = db;

@@ -91,7 +91,10 @@ router.post('/join', authenticate, (req, res) => {
       .get(group.id, req.user.id || req.user.uid);
 
     if (alreadyMember) {
-      return res.status(400).json({ error: 'Ya eres miembro de este grupo' });
+      return res.json({
+        group: { id: group.id, name: group.name, code: group.code },
+        message: 'Ya eres miembro de este grupo',
+      });
     }
 
     db.prepare(
@@ -294,8 +297,8 @@ router.post('/:id/members', authenticate, (req, res) => {
     if (!userId) {
       userId = uuidv4();
       db.prepare(`
-        INSERT INTO users (id, email, display_name, photo_url)
-        VALUES (?, ?, ?, '')
+        INSERT INTO users (id, email, display_name, photo_url, is_registered, profile_completed)
+        VALUES (?, ?, ?, '', 0, 0)
       `).run(userId, cleanEmail, cleanName);
     } else {
       // Actualizar nombre si no tenía

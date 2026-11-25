@@ -12,10 +12,14 @@ router.post('/check-email', (req, res) => {
 
   try {
     const existing = db
-      .prepare('SELECT id, email FROM users WHERE LOWER(email) = LOWER(?)')
+      .prepare('SELECT id, email, is_registered FROM users WHERE LOWER(email) = LOWER(?)')
       .get(email.trim());
 
-    res.json({ exists: Boolean(existing) });
+    // Si no existe, o si solo fue añadido como participante invitado previo (is_registered === 0),
+    // no se considera registrado para permitirle registrarse sin bloqueos.
+    const isRegistered = Boolean(existing && existing.is_registered === 1);
+
+    res.json({ exists: isRegistered });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al comprobar correo' });
@@ -45,22 +49,72 @@ router.post('/verify', authenticate, (req, res) => {
              display_name = ?, 
              first_name = coalesce(?, first_name), 
              last_name = coalesce(?, last_name), 
-             profile_completed = 1 
+             profile_completed = 1,
+             is_registered = 1 
            WHERE id = ?`
         ).run(email, displayName, firstName || null, lastName || null, uid);
       } else {
         db.prepare(
-          `UPDATE users SET email = ?, photo_url = coalesce(nullif(?, ''), photo_url) WHERE id = ?`
+          `UPDATE users SET email = ?, photo_url = coalesce(nullif(?, ''), photo_url), is_registered = 1 WHERE id = ?`
         ).run(email, picture, uid);
       }
       userRecord = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
     } else {
-      const isCompleted = (providedDisplayName || firstName || lastName) ? 1 : 0;
-      db.prepare(
-        `INSERT INTO users (id, email, display_name, first_name, last_name, photo_url, profile_completed) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
-      ).run(uid, email, displayName, firstName || null, lastName || null, picture || null, isCompleted);
-      userRecord = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
+      // Si no existe por UID, comprobar si existía un registro previo por email (creado al invitarlo a un grupo)
+      const existingByEmail = db
+        .prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)')
+        .get(email);
+
+      if (existingByEmail) {
+        const oldId = existingByEmail.id;
+        db.pragma('foreign_keys = OFF');
+        const migrateTx = db.transaction(() => {
+          // Actualizar claves foráneas en members y groups al nuevo UID de Firebase
+          db.prepare('UPDATE members SET user_id = ? WHERE user_id = ?').run(uid, oldId);
+          db.prepare('UPDATE members SET assigned_to = ? WHERE assigned_to = ?').run(uid, oldId);
+          db.prepare('UPDATE groups SET creator_id = ? WHERE creator_id = ?').run(uid, oldId);
+
+          const isCompleted =
+            providedDisplayName || firstName || lastName
+              ? 1
+              : existingByEmail.profile_completed || 0;
+
+          // Actualizar el usuario al nuevo UID de Firebase y marcar como registrado
+          db.prepare(
+            `UPDATE users SET 
+               id = ?, 
+               email = ?, 
+               display_name = coalesce(nullif(?, ''), display_name), 
+               first_name = coalesce(?, first_name), 
+               last_name = coalesce(?, last_name), 
+               photo_url = coalesce(nullif(?, ''), photo_url), 
+               is_registered = 1, 
+               profile_completed = ? 
+             WHERE id = ?`
+          ).run(
+            uid,
+            email,
+            displayName,
+            firstName || null,
+            lastName || null,
+            picture || null,
+            isCompleted,
+            oldId
+          );
+        });
+        migrateTx();
+        db.pragma('foreign_keys = ON');
+
+        userRecord = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
+      } else {
+        // Usuario totalmente nuevo
+        const isCompleted = providedDisplayName || firstName || lastName ? 1 : 0;
+        db.prepare(
+          `INSERT INTO users (id, email, display_name, first_name, last_name, photo_url, profile_completed, is_registered) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, 1)`
+        ).run(uid, email, displayName, firstName || null, lastName || null, picture || null, isCompleted);
+        userRecord = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
+      }
     }
 
     res.json({
@@ -104,7 +158,8 @@ router.put('/profile', authenticate, (req, res) => {
       SET display_name = ?, 
           first_name = ?, 
           last_name = ?, 
-          profile_completed = 1 
+          profile_completed = 1,
+          is_registered = 1 
       WHERE id = ?
     `).run(fullName, fName || null, lName || null, uid);
 
