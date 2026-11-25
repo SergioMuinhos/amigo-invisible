@@ -108,6 +108,44 @@ router.post('/join', authenticate, (req, res) => {
   }
 });
 
+// Cambiar nombre del grupo (solo el creador)
+router.put('/:id', authenticate, (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'El nombre del grupo no puede estar vacío' });
+  }
+
+  const cleanName = name.trim();
+
+  try {
+    const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(id);
+    if (!group) {
+      return res.status(404).json({ error: 'Grupo no encontrado' });
+    }
+
+    const currentUserId = req.user.id || req.user.uid;
+    if (group.creator_id !== currentUserId) {
+      return res.status(403).json({ error: 'Solo el creador puede cambiar el nombre del grupo' });
+    }
+
+    db.prepare('UPDATE groups SET name = ? WHERE id = ?').run(cleanName, id);
+
+    res.json({
+      message: 'Nombre del grupo actualizado correctamente',
+      group: {
+        id: group.id,
+        name: cleanName,
+        code: group.code,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar el nombre del grupo' });
+  }
+});
+
 // Detalle de un grupo con sus miembros
 router.get('/:id', authenticate, (req, res) => {
   const { id } = req.params;

@@ -20,6 +20,9 @@ export default function GroupPage() {
   // Modal para añadir participante
   const [showAddModal, setShowAddModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [updatingName, setUpdatingName] = useState(false);
   const [addName, setAddName] = useState('');
   const [addEmail, setAddEmail] = useState('');
   const [sendInviteEmail, setSendInviteEmail] = useState(true);
@@ -59,6 +62,24 @@ export default function GroupPage() {
       setMyAssignment(data);
     } catch (err) {
       console.error('No hay asignación todavía', err.message);
+    }
+  };
+
+  const handleUpdateName = async (e) => {
+    e.preventDefault();
+    if (!editedName.trim()) return;
+    setUpdatingName(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await api.updateGroup(token, id, editedName.trim());
+      setGroup((prev) => ({ ...prev, name: editedName.trim() }));
+      setIsEditingName(false);
+      setSuccess(res.message || 'Nombre del grupo actualizado correctamente');
+    } catch (err) {
+      setError(err.message || 'No se pudo actualizar el nombre del grupo');
+    } finally {
+      setUpdatingName(false);
     }
   };
 
@@ -283,9 +304,67 @@ export default function GroupPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                  {group.name}
-                </h1>
+                {isEditingName ? (
+                  <form onSubmit={handleUpdateName} className="flex items-center gap-2 flex-wrap">
+                    <input
+                      type="text"
+                      autoFocus
+                      required
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      className="text-xl sm:text-3xl font-extrabold text-slate-900 border-2 border-red-500 rounded-2xl px-3 py-1.5 focus:outline-none focus:ring-4 focus:ring-red-100 shadow-sm"
+                      placeholder="Nombre del grupo"
+                    />
+                    <button
+                      type="submit"
+                      disabled={updatingName || !editedName.trim()}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm transition active:scale-95 disabled:opacity-50"
+                    >
+                      {updatingName ? 'Guardando...' : 'Guardar ✓'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingName(false);
+                        setEditedName(group.name);
+                      }}
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition"
+                    >
+                      Cancelar
+                    </button>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                      {group.name}
+                    </h1>
+                    {isCreator && (
+                      <button
+                        onClick={() => {
+                          setEditedName(group.name);
+                          setIsEditingName(true);
+                        }}
+                        title="Cambiar nombre del grupo"
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl border border-transparent hover:border-red-200 transition"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-5 h-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )}
                 <span
                   className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                     group.assigned
