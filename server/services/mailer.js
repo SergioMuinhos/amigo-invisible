@@ -156,4 +156,10 @@ async function sendAssignmentEmail({
   }
 }
 
-module.exports = { sendAssignmentEmail };
+function isEmailConfigured() {
+  const user = process.env.SMTP_USER || process.env.GMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
+  return Boolean(user && pass);
+}
+
+module.exports = { sendAssignmentEmail, isEmailConfigured };

@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 const db = require('../db');
 const { authenticate } = require('../middleware/auth');
-const { sendAssignmentEmail } = require('../services/mailer');
+const { sendAssignmentEmail, isEmailConfigured } = require('../services/mailer');
 
 function generateCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -349,10 +349,15 @@ router.post('/:id/assign', authenticate, async (req, res) => {
       }
     }
 
+    const emailConfigured = isEmailConfigured();
+
     res.json({
-      message: '¡Sorteo realizado con éxito! Se han enviado los correos a los participantes.',
+      message: emailConfigured
+        ? '¡Sorteo realizado con éxito! Se han enviado los correos a los participantes.'
+        : '¡Sorteo realizado con éxito! (Aviso: los correos no se enviaron a las bandejas reales porque falta configurar las credenciales SMTP en server/.env).',
       assigned: true,
       participantCount: n,
+      emailConfigured,
     });
   } catch (err) {
     console.error(err);
