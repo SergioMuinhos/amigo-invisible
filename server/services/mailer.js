@@ -1,29 +1,26 @@
-const { Resend } = require('resend');
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 let resendClient = null;
 let smtpTransporter = null;
-
-function getResendClient() {
-  if (resendClient) return resendClient;
-  if (process.env.RESEND_API_KEY) {
-    resendClient = new Resend(process.env.RESEND_API_KEY);
-  }
-  return resendClient;
-}
 
 function getSmtpTransporter() {
   if (smtpTransporter) return smtpTransporter;
 
   const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
+  const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465;
   const user = process.env.SMTP_USER || process.env.GMAIL_USER;
   const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
 
   if (user && pass) {
     if (process.env.SMTP_SERVICE === 'gmail' || (!host && user.endsWith('@gmail.com'))) {
       smtpTransporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        tls: {
+          servername: 'smtp.gmail.com',
+        },
         auth: { user, pass },
       });
     } else if (host) {
@@ -39,11 +36,20 @@ function getSmtpTransporter() {
   return smtpTransporter;
 }
 
+function getResendClient() {
+  if (resendClient) return resendClient;
+  if (process.env.RESEND_API_KEY) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
+
 function isEmailConfigured() {
-  if (process.env.RESEND_API_KEY) return true;
   const user = process.env.SMTP_USER || process.env.GMAIL_USER;
   const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
-  return Boolean(user && pass);
+  if (user && pass) return true;
+  if (process.env.RESEND_API_KEY) return true;
+  return false;
 }
 
 /**
@@ -142,7 +148,27 @@ async function sendAssignmentEmail({
 </html>
   `;
 
-  // 1. Envío prioritario con Resend API
+  // 1. Prioridad: Envío con Gmail / SMTP (permite enviar a cualquier correo de amigos o familiares)
+  const mailTransporter = getSmtpTransporter();
+  if (mailTransporter) {
+    const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@amigoinvisible.app';
+    try {
+      const info = await mailTransporter.sendMail({
+        from: `"Amigo Invisible" <${fromAddress}>`,
+        to: giverEmail,
+        subject,
+        html: htmlContent,
+        text: `¡Hola ${giverName}! En el grupo "${groupName}", te ha tocado regalarle a: ${receiverName}. ¡Recuerda guardar el secreto! Más info en: ${groupUrl}`,
+      });
+      console.log(`[GMAIL ENVIADO CON ÉXITO] A: ${giverEmail} -> ID: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`[GMAIL ERROR] A: ${giverEmail}:`, err.message);
+      // Fallback a Resend si Gmail fallara
+    }
+  }
+
+  // 2. Envío con Resend API
   const resend = getResendClient();
   if (resend) {
     try {
@@ -163,26 +189,6 @@ async function sendAssignmentEmail({
       return { success: true, messageId: data?.id };
     } catch (err) {
       console.error(`[RESEND EXCEPCIÓN] A: ${giverEmail}:`, err.message);
-      return { success: false, error: err.message };
-    }
-  }
-
-  // 2. Envío secundario con SMTP / Nodemailer
-  const mailTransporter = getSmtpTransporter();
-  if (mailTransporter) {
-    const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@amigoinvisible.app';
-    try {
-      const info = await mailTransporter.sendMail({
-        from: `"Amigo Invisible" <${fromAddress}>`,
-        to: giverEmail,
-        subject,
-        html: htmlContent,
-        text: `¡Hola ${giverName}! En el grupo "${groupName}", te ha tocado regalarle a: ${receiverName}. ¡Recuerda guardar el secreto! Más info en: ${groupUrl}`,
-      });
-      console.log(`[SMTP ENVIADO CON ÉXITO] A: ${giverEmail} -> ID: ${info.messageId}`);
-      return { success: true, messageId: info.messageId };
-    } catch (err) {
-      console.error(`[SMTP ERROR] A: ${giverEmail}:`, err.message);
       return { success: false, error: err.message };
     }
   }
