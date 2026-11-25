@@ -212,4 +212,109 @@ async function sendAssignmentEmail({
   return { success: true, simulated: true };
 }
 
-module.exports = { sendAssignmentEmail, isEmailConfigured };
+/**
+ * Notifica al creador del grupo cuando un participante rechaza su asignación
+ * y solicita que se repita el sorteo.
+ */
+async function sendRejectionNoticeToCreator({
+  creatorEmail,
+  creatorName,
+  groupName,
+  groupId,
+  rejectorName,
+}) {
+  if (!creatorEmail) return { success: false, error: 'Email del creador no especificado' };
+
+  const appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+  const groupUrl = `${appUrl}/grupo/${groupId}`;
+
+  const subject = `⚠️ Solicitud de nuevo sorteo en "${groupName}"`;
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Solicitud de repetición de sorteo</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b; }
+        .card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
+        .header { background: linear-gradient(135deg, #f59e0b, #d97706); padding: 32px 24px; text-align: center; color: #ffffff; }
+        .body { padding: 32px 24px; }
+        .alert-box { background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 16px; padding: 18px; margin: 20px 0; text-align: left; }
+        .button { display: inline-block; background-color: #dc2626; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 14px; font-weight: bold; font-size: 15px; margin-top: 15px; }
+        .footer { padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="header">
+          <div style="font-size: 40px; margin-bottom: 8px;">🎲</div>
+          <h1 style="margin: 0; font-size: 22px; font-weight: 800;">Solicitud de Repetición de Sorteo</h1>
+          <p style="margin: 6px 0 0 0; opacity: 0.95; font-size: 15px;">Grupo: <strong>${groupName}</strong></p>
+        </div>
+        <div class="body">
+          <p style="font-size: 16px; margin-top: 0;">Hola <strong>${creatorName}</strong>,</p>
+          <p style="font-size: 15px; line-height: 1.5; color: #475569;">
+            Te avisamos como creador del grupo de que <strong>${rejectorName}</strong> ha indicado que <strong>no le convence su amigo invisible asignado</strong> y solicita que se vuelva a realizar el sorteo.
+          </p>
+          
+          <div class="alert-box">
+            <p style="margin: 0 0 6px 0; font-weight: bold; color: #92400e; font-size: 15px;">¿Qué puedes hacer?</p>
+            <p style="margin: 0; font-size: 14px; color: #b45309; line-height: 1.4;">
+              Accede a la web del grupo y pulsa el botón <strong>"Volver a sortear"</strong> para generar una nueva combinación aleatoria para todos los participantes.
+            </p>
+          </div>
+
+          <div style="text-align: center; margin-top: 25px;">
+            <a href="${groupUrl}" class="button">Abrir grupo y volver a sortear 🎲</a>
+          </div>
+        </div>
+        <div class="footer">
+          <p style="margin: 0;">Amigo Invisible · Notificación automática para el creador del grupo</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Envío vía Gmail o Resend
+  const smtp = getSmtpTransporter();
+  if (smtp) {
+    try {
+      const from = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER;
+      const info = await smtp.sendMail({
+        from: `Amigo Invisible <${from}>`,
+        to: creatorEmail,
+        subject,
+        html: htmlContent,
+      });
+      console.log(`[AVISO CREADOR ENVIADO GMAIL] A: ${creatorEmail} -> ID: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`[AVISO CREADOR ERROR GMAIL] A: ${creatorEmail}:`, err.message);
+    }
+  }
+
+  const resend = getResendClient();
+  if (resend) {
+    try {
+      const from = process.env.EMAIL_FROM || 'Amigo Invisible <onboarding@resend.dev>';
+      const { data } = await resend.emails.send({
+        from,
+        to: creatorEmail,
+        subject,
+        html: htmlContent,
+      });
+      console.log(`[AVISO CREADOR ENVIADO RESEND] A: ${creatorEmail} -> ID: ${data?.id}`);
+      return { success: true, messageId: data?.id };
+    } catch (err) {
+      console.error(`[AVISO CREADOR ERROR RESEND]:`, err.message);
+    }
+  }
+
+  console.log(`[AVISO CREADOR SIMULADO] A: ${creatorEmail} por rechazo de ${rejectorName}`);
+  return { success: true, simulated: true };
+}
+
+module.exports = { sendAssignmentEmail, sendRejectionNoticeToCreator, isEmailConfigured };

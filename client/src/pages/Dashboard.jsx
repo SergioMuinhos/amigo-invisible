@@ -370,20 +370,27 @@ export default function Dashboard() {
                         {g.name}
                       </h3>
 
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 ${
-                          isAssigned
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}
-                      >
+                      <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                        {Boolean(g.rejected_count) && g.rejected_count > 0 && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                            ⚠️ Repetición ({g.rejected_count})
+                          </span>
+                        )}
                         <span
-                          className={`w-2 h-2 rounded-full ${
-                            isAssigned ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 ${
+                            isAssigned
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
                           }`}
-                        />
-                        {isAssigned ? 'Sorteado' : 'Pendiente'}
-                      </span>
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              isAssigned ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
+                            }`}
+                          />
+                          {isAssigned ? 'Sorteado' : 'Pendiente'}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Metadatos */}

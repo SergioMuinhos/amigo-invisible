@@ -390,6 +390,37 @@ export default function GroupPage() {
           </div>
         )}
 
+        {/* Notificación destacada para el Creador si alguien rechazó el sorteo */}
+        {isCreator && group.assigned && group.validationStats?.rejected > 0 && (
+          <div className="mb-8 p-5 sm:p-6 rounded-3xl bg-amber-50 border-2 border-amber-300 text-amber-900 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <span className="text-3xl sm:text-4xl">🔔</span>
+              <div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-200 text-amber-900 mb-1">
+                  Atención Creador
+                </span>
+                <h3 className="font-black text-base sm:text-lg">
+                  Un participante ha solicitado repetir el sorteo
+                </h3>
+                <p className="text-xs sm:text-sm text-amber-800 mt-0.5 max-w-xl">
+                  {group.validationStats.rejectedBy?.length > 0
+                    ? `Participante(s) no conformes: ${group.validationStats.rejectedBy.join(', ')}. No le convence su asignación y solicitan un nuevo sorteo.`
+                    : 'Uno de los participantes ha indicado que no le convence su amigo asignado.'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleAssign}
+              disabled={assigning}
+              className="px-5 py-3 rounded-2xl font-bold text-sm bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-md shadow-amber-200 transition transform active:scale-95 shrink-0 flex items-center justify-center gap-2"
+            >
+              <span>🎲</span>
+              <span>{assigning ? 'Sorteando...' : 'Volver a sortear ahora'}</span>
+            </button>
+          </div>
+        )}
+
         {/* Tu Amigo Invisible (Revelación) */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm mb-8">
           <div className="flex items-center gap-3 mb-4">

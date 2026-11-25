@@ -3,7 +3,11 @@ const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 const db = require('../db');
 const { authenticate } = require('../middleware/auth');
-const { sendAssignmentEmail, isEmailConfigured } = require('../services/mailer');
+const {
+  sendAssignmentEmail,
+  sendRejectionNoticeToCreator,
+  isEmailConfigured,
+} = require('../services/mailer');
 
 function generateCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -14,9 +18,11 @@ router.get('/', authenticate, (req, res) => {
   try {
     const groups = db
       .prepare(`
-        SELECT g.id, g.name, g.code, g.assigned, g.created_at, g.creator_id,
+        SELECT g.id, g.name, g.code, g.assigned, g.created_at, g.creator_id, g.emails_sent,
                u.display_name AS creator_name,
-               (SELECT COUNT(*) FROM members WHERE group_id = g.id) AS member_count
+               (SELECT COUNT(*) FROM members WHERE group_id = g.id) AS member_count,
+               (SELECT COUNT(*) FROM members WHERE group_id = g.id AND validation_status = 'rejected') AS rejected_count,
+               (SELECT COUNT(*) FROM members WHERE group_id = g.id AND validation_status = 'approved') AS approved_count
         FROM groups g
         JOIN members m ON m.group_id = g.id
         JOIN users u ON u.id = g.creator_id
@@ -153,6 +159,9 @@ router.get('/:id', authenticate, (req, res) => {
           rejected: rejectedCount,
           pending: pendingCount,
           allApproved,
+          rejectedBy: members
+            .filter((m) => m.validation_status === 'rejected')
+            .map((m) => m.display_name || 'Sin nombre'),
         },
       },
       members: members.map((m) => ({
@@ -428,6 +437,38 @@ router.post('/:id/validate', authenticate, async (req, res) => {
     db.prepare(
       `UPDATE members SET validation_status = ? WHERE group_id = ? AND user_id = ?`
     ).run(newStatus, id, userId);
+
+    // Si un participante rechaza, avisar de inmediato por email al creador del grupo
+    if (action === 'reject') {
+      try {
+        const creator = db
+          .prepare(
+            `SELECT u.display_name, u.email 
+             FROM groups g 
+             JOIN users u ON u.id = g.creator_id 
+             WHERE g.id = ?`
+          )
+          .get(id);
+
+        const currentUser = db
+          .prepare(`SELECT display_name FROM users WHERE id = ?`)
+          .get(userId);
+
+        if (creator && creator.email) {
+          sendRejectionNoticeToCreator({
+            creatorEmail: creator.email,
+            creatorName: creator.display_name || 'Creador',
+            groupName: group.name,
+            groupId: group.id,
+            rejectorName: currentUser?.display_name || 'Un participante',
+          }).catch((err) =>
+            console.error('Error enviando aviso de rechazo al creador:', err.message)
+          );
+        }
+      } catch (noticeErr) {
+        console.error('Error obteniendo creador para aviso de rechazo:', noticeErr.message);
+      }
+    }
 
     // Comprobar si TODOS los miembros han validado positivamente
     const allMembers = db
