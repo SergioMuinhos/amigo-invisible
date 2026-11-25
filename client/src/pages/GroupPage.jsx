@@ -7,18 +7,30 @@ export default function GroupPage() {
   const { id } = useParams();
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
+
   const [group, setGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
   const [myAssignment, setMyAssignment] = useState(null);
+
+  // Modal para añadir participante
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addName, setAddName] = useState('');
+  const [addEmail, setAddEmail] = useState('');
+  const [addingMember, setAddingMember] = useState(false);
+  const [addError, setAddError] = useState('');
+
+  // Notificaciones
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   useEffect(() => {
-    loadGroup();
-    loadMyAssignment();
+    if (token && id) {
+      loadGroup();
+      loadMyAssignment();
+    }
   }, [token, id]);
 
   const loadGroup = async () => {
@@ -28,7 +40,7 @@ export default function GroupPage() {
       setGroup(data.group);
       setMembers(data.members || []);
     } catch (err) {
-      setError('No se pudo cargar el grupo');
+      setError(err.message || 'No se pudo cargar el grupo');
     } finally {
       setLoading(false);
     }
@@ -45,35 +57,70 @@ export default function GroupPage() {
 
   const handleAssign = async () => {
     setError('');
+    setSuccess('');
     setAssigning(true);
     try {
-      await api.assignGroup(token, id);
-      setSuccess('¡Asignación hecha! Cada persona ya sabe a quién le tocó');
+      const res = await api.assignGroup(token, id);
+      setSuccess(
+        res.message ||
+          '¡Sorteo realizado con éxito! Se ha enviado un correo electrónico discreto a cada participante.'
+      );
       await loadGroup();
       await loadMyAssignment();
     } catch (err) {
-      setError('No se pudo hacer la asignación');
+      setError(err.message || 'No se pudo hacer la asignación del sorteo');
     } finally {
       setAssigning(false);
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+  const handleAddMember = async (e) => {
+    e.preventDefault();
+    if (!addName.trim() || !addEmail.trim()) {
+      setAddError('Por favor, indica el nombre completo y el correo.');
+      return;
+    }
+    setAddError('');
+    setAddingMember(true);
+    try {
+      await api.addMember(token, id, {
+        name: addName.trim(),
+        email: addEmail.trim(),
+      });
+      setAddName('');
+      setAddEmail('');
+      setShowAddModal(false);
+      setSuccess(`¡${addName.trim()} ha sido añadido al grupo!`);
+      await loadGroup();
+    } catch (err) {
+      setAddError(err.message || 'No se pudo añadir al participante');
+    } finally {
+      setAddingMember(false);
+    }
   };
 
-  const isCreator = group?.creator_id === (user?.id || user?.uid);
+  const handleCopyCode = () => {
+    if (group?.code) {
+      navigator.clipboard.writeText(group.code);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2500);
+    }
+  };
+
+  const isCreator = Boolean(
+    group?.is_creator ||
+      (group?.creator_id && user?.uid && group.creator_id === user.uid) ||
+      (group?.creator_id && user?.id && group.creator_id === user.id)
+  );
+
   const currentUid = user?.id || user?.uid;
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="text-4xl sm:text-5xl mb-4">⏳</div>
-          <p className="text-xl sm:text-2xl text-gray-600">
-            Cargando grupo...
-          </p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-600">
+        <div className="text-center space-y-3">
+          <div className="text-5xl animate-bounce">🎁</div>
+          <p className="text-lg font-semibold">Cargando grupo...</p>
         </div>
       </div>
     );
@@ -81,17 +128,17 @@ export default function GroupPage() {
 
   if (!group) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="text-4xl sm:text-5xl mb-4">❌</div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-red-600 mb-2">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="bg-white p-8 rounded-3xl border border-slate-200 max-w-md w-full text-center shadow-lg">
+          <div className="text-5xl mb-4">❌</div>
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">
             {error || 'Grupo no encontrado'}
           </h1>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="btn-primary"
-          >
-            Volver a grupos
+          <p className="text-slate-500 mb-6 text-sm">
+            Verifica que tengas acceso o que el código de invitación sea el correcto.
+          </p>
+          <button onClick={() => navigate('/dashboard')} className="btn-primary w-full">
+            Volver a mis grupos
           </button>
         </div>
       </div>
@@ -99,237 +146,377 @@ export default function GroupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Nav */}
-      <nav className="bg-white border-b border-gray-300">
+    <div className="min-h-screen bg-slate-50 text-slate-800">
+      {/* Navegación superior */}
+      <nav className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm backdrop-blur-md bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20 items-center">
+          <div className="flex justify-between h-16 sm:h-20 items-center">
             <button
               onClick={() => navigate('/dashboard')}
-              aria-label="Volver a grupos"
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+              aria-label="Volver al panel"
+              className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-semibold text-sm sm:text-base py-2 px-3 rounded-xl hover:bg-slate-100 transition"
             >
-              <span className="text-xl sm:text-2xl">←</span>
-              <span className="hidden sm:inline text-lg font-medium">Volver</span>
+              <span>←</span>
+              <span>Volver a grupos</span>
             </button>
 
-            <div className="hidden md:flex items-center gap-6">
-              <span className="text-base text-gray-600">
-                👤 {user?.email || 'Usuario'}
+            <div className="flex items-center gap-3">
+              <span className="text-xs sm:text-sm text-slate-500 hidden sm:inline">
+                {user?.email}
               </span>
               <button
-                onClick={handleLogout}
-                aria-label="Cerrar sesión"
-                className="px-6 py-3 text-base font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition"
+                onClick={logout}
+                className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-red-600 py-2 px-3 rounded-xl hover:bg-red-50 border border-slate-200 hover:border-red-200 transition"
               >
                 Cerrar sesión
-              </button>
-            </div>
-
-            <div className="md:hidden flex items-center gap-2">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                aria-label="Menú"
-                className="p-3 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl"
-              >
-                <span className="text-2xl">☰</span>
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {menuOpen && (
-        <div className="md:hidden bg-white border-b border-gray-300 px-4 pb-4">
-          <div className="flex items-center justify-between py-4 border-b border-gray-100 mb-4">
-            <span className="text-base text-gray-600 truncate max-w-xs">
-              {user?.email || 'Usuario'}
-            </span>
-            <button
-              onClick={() => setMenuOpen(false)}
-              className="p-2 text-gray-400 hover:text-gray-600"
-            >
-              <span className="text-2xl">✕</span>
-            </button>
+      {/* Contenido principal */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        {/* Cabecera del Grupo */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                  {group.name}
+                </h1>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                    group.assigned
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      group.assigned ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
+                    }`}
+                  />
+                  {group.assigned ? 'Sorteo realizado' : 'Pendiente de sorteo'}
+                </span>
+                {isCreator && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                    👑 Creador del grupo
+                  </span>
+                )}
+              </div>
+
+              {/* Código de Invitación con copia rápida */}
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <span className="text-sm font-medium text-slate-500">
+                  Código de invitación:
+                </span>
+                <span className="font-mono font-bold text-base bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200 tracking-widest">
+                  {group.code}
+                </span>
+                <button
+                  onClick={handleCopyCode}
+                  className="px-3 py-1 text-xs font-bold rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 transition flex items-center gap-1"
+                >
+                  {copiedCode ? (
+                    <>
+                      <span className="text-emerald-600">✓</span>
+                      <span className="text-emerald-600">¡Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>📋</span>
+                      <span>Copiar código</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Acciones principales del Creador */}
+            {isCreator && !group.assigned && (
+              <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="btn-secondary sm:w-auto"
+                >
+                  + Añadir participante
+                </button>
+                <button
+                  onClick={handleAssign}
+                  disabled={assigning || members.length < 2}
+                  className="btn-primary sm:w-auto"
+                >
+                  {assigning ? 'Realizando sorteo...' : '🎲 Realizar Sorteo Aleatorio'}
+                </button>
+              </div>
+            )}
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full py-4 px-4 text-left text-base font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition"
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      )}
-
-      <div className="max-w-5xl mx-auto py-6 sm:py-10 px-4 sm:px-6 lg:px-8 safe-bottom">
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
-            {group.name}
-          </h1>
-          <p className="text-gray-600 text-lg">
-            🔑 Código del grupo:
-            <span className="font-mono font-bold text-gray-800">{group.code}</span>
-          </p>
         </div>
 
+        {/* Notificaciones */}
         {success && (
-          <div className="mb-6 p-5 rounded-2xl bg-green-50 border border-green-200 text-lg text-green-700 font-medium shadow-sm">
-            ✅ {success}
+          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium flex items-center justify-between shadow-sm animate-fade-in">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">✅</span>
+              <span>{success}</span>
+            </div>
+            <button
+              onClick={() => setSuccess('')}
+              className="text-emerald-600 hover:text-emerald-900 font-bold p-1 text-lg"
+            >
+              ✕
+            </button>
           </div>
         )}
 
         {error && (
-          <div className="mb-6 p-5 rounded-2xl bg-red-50 border border-red-200 text-lg text-red-700 font-medium shadow-sm">
-            ❌ {error}
+          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 font-medium flex items-center justify-between shadow-sm animate-fade-in">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⚠️</span>
+              <span>{error}</span>
+            </div>
+            <button
+              onClick={() => setError('')}
+              className="text-rose-600 hover:text-rose-900 font-bold p-1 text-lg"
+            >
+              ✕
+            </button>
           </div>
         )}
 
-        {/* Tu amigo invisible */}
-        <div className="card mb-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center sm:text-left">
-            🎁 Tu amigo invisible
-          </h2>
+        {/* Tu Amigo Invisible (Revelación) */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-2xl">🎁</span>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+              Tu Amigo Invisible
+            </h2>
+          </div>
+
           {myAssignment?.assigned && myAssignment?.assignedTo ? (
-            <div className="space-y-6 sm:flex sm:items-center sm:justify-between gap-6">
-              <div>
-                <p className="text-lg text-gray-600 mb-2">
-                  Te ha tocado regalarle a:
-                </p>
-                <div className="inline-block p-6 sm:p-8 bg-red-50 border-4 border-red-200 rounded-3xl">
-                  <div className="text-4xl sm:text-5xl font-bold text-red-600 mb-2">
-                    {myAssignment.assignedTo.name}
-                  </div>
-                  <p className="text-lg sm:text-xl text-gray-600">
-                    {myAssignment.assignedTo.email}
-                  </p>
-                </div>
-                <p className="text-lg sm:text-xl text-gray-500 mt-4">
-                  Solo tú puedes ver esta información. ¡Es un secreto!
-                </p>
+            <div className="bg-gradient-to-tr from-rose-50 to-red-50 border-2 border-red-200 rounded-2xl p-6 sm:p-8 text-center sm:text-left">
+              <span className="text-xs uppercase font-extrabold text-red-600 tracking-wider block mb-2">
+                ✨ Te ha tocado regalarle a ✨
+              </span>
+              <div className="text-3xl sm:text-4xl font-extrabold text-red-700 mb-1">
+                {myAssignment.assignedTo.name}
+              </div>
+              <p className="text-slate-600 text-sm sm:text-base font-medium">
+                {myAssignment.assignedTo.email}
+              </p>
+              <div className="mt-4 pt-4 border-t border-red-200/60 text-xs sm:text-sm text-slate-500 flex items-center gap-2 justify-center sm:justify-start">
+                <span>🤫</span>
+                <span>
+                  Solo tú puedes ver este resultado. ¡Guarda el secreto hasta la entrega de regalos!
+                </span>
               </div>
             </div>
           ) : (
-            <div className="text-center sm:text-left space-y-4 py-8">
-              <p className="text-lg text-gray-600">
-                Aún no se ha hecho el sorteo
-              </p>
-              {group.assigned && (
-                <p className="text-lg sm:text-xl text-red-500">
-                  El creador aún no ha asignado los amigos invisibles
-                </p>
-              )}
-              {!group.assigned && isCreator && members.length >= 2 && (
-                <button
-                  onClick={handleAssign}
-                  disabled={assigning}
-                  className="btn-primary w-full sm:w-auto"
-                >
-                  {assigning ? 'Asignando...' : 'Hacer sorteo aleatorio'}
-                </button>
-              )}
-              {!group.assigned && !isCreator && (
-                <p className="text-lg sm:text-xl text-gray-500">
-                  Espera a que el creador del grupo haga el sorteo
-                </p>
-              )}
-              {!group.assigned && members.length < 2 && (
-                <p className="text-lg sm:text-xl text-gray-500">
-                  Se necesitan al menos 2 personas para hacer el sorteo
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 sm:p-8 text-center sm:text-left space-y-4">
+              <div className="flex items-center gap-3 text-slate-700 font-semibold text-lg">
+                <span>⏳</span>
+                <span>Aún no se ha realizado el sorteo</span>
+              </div>
+
+              {isCreator ? (
+                <div>
+                  <p className="text-slate-600 text-sm sm:text-base mb-4">
+                    Como creador del grupo, cuando todos los amigos o familiares se hayan unido,
+                    pulsa el botón para realizar el sorteo automático.
+                  </p>
+                  {members.length < 2 ? (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm font-medium">
+                      ⚠️ Se necesitan al menos <strong>2 personas</strong> en el grupo para realizar el sorteo. Añade participantes con el botón o comparte el código.
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleAssign}
+                      disabled={assigning}
+                      className="btn-primary sm:w-auto"
+                    >
+                      {assigning ? 'Realizando sorteo...' : '🎲 Realizar Sorteo y Enviar Correos'}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <p className="text-slate-500 text-sm sm:text-base">
+                  El creador del grupo aún no ha iniciado el sorteo. En cuanto lo realice, recibirás un correo y verás aquí a quién te ha tocado.
                 </p>
               )}
             </div>
           )}
         </div>
 
-        {/* Botón asignar versión desktop */}
-        {isCreator && !group.assigned && members.length >= 2 && (
-          <div className="mb-8 hidden sm:block">
-            <button
-              onClick={handleAssign}
-              disabled={assigning}
-              className="btn-primary"
-            >
-              {assigning ? 'Asignando...' : 'Hacer sorteo aleatorio'}
-            </button>
-          </div>
-        )}
-
-        {/* Miembros */}
-        <div className="card">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-              👥 Miembros ({members.length})
-            </h2>
-            {!isCreator && (
-              <p className="text-lg text-gray-500">
-                Solo el creador puede hacer el sorteo
+        {/* Lista de Miembros */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <span>👥</span>
+                <span>Miembros del grupo ({members.length})</span>
+              </h2>
+              <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
+                Personas que participan en este amigo invisible
               </p>
+            </div>
+
+            {isCreator && !group.assigned && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="btn-secondary sm:w-auto text-sm"
+              >
+                + Añadir participante
+              </button>
             )}
           </div>
 
-          {/* Desktop: tabla normal, Mobile: scroll horizontal */}
-          <div className="overflow-x-auto md:overflow-visible">
-            <table className="w-full text-left border-collapse min-w-full">
+          {/* Tabla de Miembros */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b-2 border-gray-200 bg-gray-50 sticky top-0 md:sticky-relative">
-                  <th className="px-6 py-4 text-left text-lg font-bold text-gray-600 uppercase">
-                    Nombre
-                  </th>
-                  <th className="px-6 py-4 text-left text-lg font-bold text-gray-600 uppercase">
-                    Correo electrónico
-                  </th>
-                  <th className="px-6 py-4 text-left text-lg font-bold text-gray-600 uppercase">
-                    Le tocó a
-                  </th>
+                <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                  <th className="px-5 py-3.5 rounded-l-xl">Nombre y Apellido</th>
+                  <th className="px-5 py-3.5">Correo electrónico</th>
+                  <th className="px-5 py-3.5 rounded-r-xl text-right">Rol</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {members.map((m) => (
-                  <tr
-                    key={m.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-200 flex items-center justify-center text-lg sm:text-xl font-bold">
-                          {m.name?.charAt(0)?.toUpperCase()}
+              <tbody className="divide-y divide-slate-100">
+                {members.map((m) => {
+                  const isCurrent = m.id === currentUid;
+                  const isMemberCreator = m.id === group.creator_id;
+
+                  return (
+                    <tr key={m.id} className="hover:bg-slate-50/70 transition">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 text-white font-bold flex items-center justify-center text-sm shadow-sm shrink-0">
+                            {m.name ? m.name.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-900 text-sm sm:text-base block">
+                              {m.name || 'Sin nombre'}
+                            </span>
+                            {isCurrent && (
+                              <span className="text-xs text-red-600 font-semibold">
+                                (Tú)
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <span className="text-lg font-medium text-gray-800">
-                          {m.name}
-                        </span>
-                        {m.id === currentUid && (
-                          <span className="ml-auto inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full uppercase tracking-wider">
-                            Tú
+                      </td>
+                      <td className="px-5 py-4 text-sm text-slate-600 font-medium">
+                        {m.email}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        {isMemberCreator ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            👑 Creador
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+                            Participante
                           </span>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-lg text-gray-600">
-                      {m.email}
-                    </td>
-                    <td className="px-6 py-4 text-lg text-gray-600">
-                      {m.assignedTo ? (
-                        <span className="font-bold text-green-600">
-                          ✅ {m.assignedTo.name}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 italic">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {members.length === 0 && (
-                  <tr>
-                    <td colSpan="3" className="px-6 py-12 text-center text-gray-500 text-xl">
-                      Sin miembros todavía
-                    </td>
-                  </tr>
-                )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Modal para que el creador añada participantes directamente */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl font-bold">
+                  👤
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                  Añadir participante
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setAddError('');
+                }}
+                className="text-slate-400 hover:text-slate-600 p-2 text-xl leading-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddMember} className="space-y-4">
+              {addError && (
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{addError}</span>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="participantName" className="label-field">
+                  Nombre y Apellido
+                </label>
+                <input
+                  id="participantName"
+                  type="text"
+                  autoFocus
+                  required
+                  value={addName}
+                  onChange={(e) => setAddName(e.target.value)}
+                  placeholder="Ej: Laura Pérez"
+                  className="input-field"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="participantEmail" className="label-field">
+                  Correo electrónico
+                </label>
+                <input
+                  id="participantEmail"
+                  type="email"
+                  required
+                  value={addEmail}
+                  onChange={(e) => setAddEmail(e.target.value)}
+                  placeholder="laura@ejemplo.com"
+                  className="input-field"
+                />
+                <p className="text-xs text-slate-500 mt-2">
+                  Se enviará a este correo el amigo que le haya tocado tras el sorteo.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setAddError('');
+                  }}
+                  className="btn-secondary flex-1"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingMember || !addName.trim() || !addEmail.trim()}
+                  className="btn-primary flex-1"
+                >
+                  {addingMember ? 'Añadiendo...' : 'Añadir'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

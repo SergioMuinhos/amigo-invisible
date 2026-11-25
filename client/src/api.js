@@ -21,7 +21,10 @@ async function request(path, options = {}, token) {
 }
 
 export const api = {
-  verifyAuth: (token) => request('/auth/verify', { method: 'POST' }, token),
+  checkEmail: (email) =>
+    request('/auth/check-email', { method: 'POST', body: JSON.stringify({ email }) }),
+  verifyAuth: (token, extra = {}) =>
+    request('/auth/verify', { method: 'POST', body: JSON.stringify(extra) }, token),
   getGroups: (token) => request('/groups', {}, token),
   createGroup: (token, name) =>
     request('/groups', { method: 'POST', body: JSON.stringify({ name }) }, token),
@@ -32,6 +35,12 @@ export const api = {
       token
     ),
   getGroup: (token, id) => request(`/groups/${id}`, {}, token),
+  addMember: (token, id, { name, email }) =>
+    request(
+      `/groups/${id}/members`,
+      { method: 'POST', body: JSON.stringify({ name, email }) },
+      token
+    ),
   assignGroup: (token, id) =>
     request(`/groups/${id}/assign`, { method: 'POST' }, token),
   getMyAssignment: (token, id) =>
