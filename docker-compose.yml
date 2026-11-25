@@ -1,0 +1,20 @@
+services:
+  amigo-invisible:
+    build: .
+    container_name: amigo-invisible
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      # Configuración de Firebase Admin (para verificar tokens del backend)
+      - FIREBASE_PROJECT_ID=tu-proyecto-id
+      - FIREBASE_CLIENT_EMAIL=tu-servicio@cuenta.iam.gserviceaccount.com
+      - FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nTU_CLAVE_PRIVADA\n-----END PRIVATE KEY-----
+      # Ruta de la base de datos SQLite (opcional)
+      - DB_PATH=/data/database.sqlite
+    volumes:
+      - amigo_data:/data
+    restart: unless-stopped
+
+volumes:
+  amigo_data:
