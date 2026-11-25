@@ -25,44 +25,106 @@ router.post('/check-email', (req, res) => {
 // Registrar o actualizar usuario tras iniciar sesión con Firebase
 router.post('/verify', authenticate, (req, res) => {
   const { uid, email, picture } = req.user;
-  // Si el cliente envía displayName (Nombre y Apellido del registro), lo usamos
-  const displayName = req.body?.displayName?.trim() || req.user.name || email?.split('@')[0] || '';
+  const firstName = req.body?.firstName?.trim();
+  const lastName = req.body?.lastName?.trim();
+  const providedDisplayName = req.body?.displayName?.trim();
 
-  if (!uid || !email) {
-    return res.status(400).json({ error: 'Datos de usuario incompletos' });
+  let displayName = providedDisplayName || req.user.name || email?.split('@')[0] || '';
+  if (firstName || lastName) {
+    displayName = `${firstName || ''} ${lastName || ''}`.trim();
   }
 
   try {
-    const existing = db
-      .prepare('SELECT * FROM users WHERE id = ?')
-      .get(uid);
+    let userRecord = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
 
-    if (existing) {
+    if (userRecord) {
+      if (providedDisplayName || firstName || lastName) {
+        db.prepare(
+          `UPDATE users SET 
+             email = ?, 
+             display_name = ?, 
+             first_name = coalesce(?, first_name), 
+             last_name = coalesce(?, last_name), 
+             profile_completed = 1 
+           WHERE id = ?`
+        ).run(email, displayName, firstName || null, lastName || null, uid);
+      } else {
+        db.prepare(
+          `UPDATE users SET email = ?, photo_url = coalesce(nullif(?, ''), photo_url) WHERE id = ?`
+        ).run(email, picture, uid);
+      }
+      userRecord = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
+    } else {
+      const isCompleted = (providedDisplayName || firstName || lastName) ? 1 : 0;
       db.prepare(
-        `UPDATE users SET email = ?, display_name = coalesce(nullif(?, ''), display_name), photo_url = coalesce(nullif(?, ''), photo_url) WHERE id = ?`
-      ).run(email, displayName, picture, uid);
-      return res.json({
-        user: { id: existing.id, email, name: displayName || existing.display_name, picture },
-        message: 'Sesión iniciada',
-      });
+        `INSERT INTO users (id, email, display_name, first_name, last_name, photo_url, profile_completed) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).run(uid, email, displayName, firstName || null, lastName || null, picture || null, isCompleted);
+      userRecord = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
     }
 
-    const insert = db.prepare(
-      `INSERT INTO users (id, email, display_name, photo_url) VALUES (?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         email = excluded.email,
-         display_name = coalesce(nullif(excluded.display_name, ''), users.display_name),
-         photo_url = coalesce(nullif(excluded.photo_url, ''), users.photo_url)`
-    );
-    insert.run(uid, email, displayName, picture);
-
-    res.status(201).json({
-      user: { id: uid, email, name: displayName, picture },
-      message: 'Usuario registrado',
+    res.json({
+      user: {
+        id: userRecord.id,
+        email: userRecord.email,
+        name: userRecord.display_name,
+        firstName: userRecord.first_name,
+        lastName: userRecord.last_name,
+        picture: userRecord.photo_url,
+        profileCompleted: Boolean(userRecord.profile_completed),
+      },
+      message: 'Sesión verificada',
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Actualizar nombre y apellidos del perfil
+router.put('/profile', authenticate, (req, res) => {
+  const { uid } = req.user;
+  const { firstName, lastName, displayName } = req.body;
+
+  const fName = (firstName || '').trim();
+  const lName = (lastName || '').trim();
+  let fullName = (displayName || '').trim();
+
+  if (fName || lName) {
+    fullName = `${fName} ${lName}`.trim();
+  }
+
+  if (!fullName) {
+    return res.status(400).json({ error: 'Debes indicar al menos un nombre' });
+  }
+
+  try {
+    db.prepare(`
+      UPDATE users 
+      SET display_name = ?, 
+          first_name = ?, 
+          last_name = ?, 
+          profile_completed = 1 
+      WHERE id = ?
+    `).run(fullName, fName || null, lName || null, uid);
+
+    const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
+
+    res.json({
+      user: {
+        id: updated.id,
+        email: updated.email,
+        name: updated.display_name,
+        firstName: updated.first_name,
+        lastName: updated.last_name,
+        picture: updated.photo_url,
+        profileCompleted: true,
+      },
+      message: 'Perfil actualizado con éxito',
+    });
+  } catch (err) {
+    console.error('Error al actualizar perfil:', err);
+    res.status(500).json({ error: 'No se pudo actualizar el perfil' });
   }
 });
 

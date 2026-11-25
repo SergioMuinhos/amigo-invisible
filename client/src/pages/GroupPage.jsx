@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
+import ProfileModal from '../components/ProfileModal';
 
 export default function GroupPage() {
   const { id } = useParams();
@@ -16,6 +17,7 @@ export default function GroupPage() {
 
   // Modal para añadir participante
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [addName, setAddName] = useState('');
   const [addEmail, setAddEmail] = useState('');
   const [addingMember, setAddingMember] = useState(false);
@@ -183,10 +185,29 @@ export default function GroupPage() {
               <span>Volver a grupos</span>
             </button>
 
-            <div className="flex items-center gap-3">
-              <span className="text-xs sm:text-sm text-slate-500 hidden sm:inline">
-                {user?.email}
-              </span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => setShowProfileModal(true)}
+                title="Editar mi nombre y apellidos"
+                className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition text-left group"
+              >
+                <div className="w-8 h-8 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden shrink-0 group-hover:scale-105 transition transform">
+                  {user?.picture ? (
+                    <img src={user.picture} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()
+                  )}
+                </div>
+                <div className="hidden xs:block">
+                  <span className="text-xs sm:text-sm font-bold text-slate-800 max-w-[120px] sm:max-w-[160px] truncate block leading-tight group-hover:text-red-600 transition">
+                    {user?.name || user?.email?.split('@')[0]}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block leading-none mt-0.5">
+                    Editar perfil ✏️
+                  </span>
+                </div>
+              </button>
+
               <button
                 onClick={logout}
                 className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-red-600 py-2 px-3 rounded-xl hover:bg-red-50 border border-slate-200 hover:border-red-200 transition"
@@ -575,6 +596,16 @@ export default function GroupPage() {
           </div>
         </div>
       )}
+
+      {/* Modal para editar Nombre y Apellidos */}
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => {
+          setShowProfileModal(false);
+          loadGroup();
+        }}
+        isFirstTime={false}
+      />
     </div>
   );
 }

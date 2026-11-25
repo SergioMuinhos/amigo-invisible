@@ -21,6 +21,9 @@ db.exec(`
     id TEXT PRIMARY KEY,
     email TEXT NOT NULL,
     display_name TEXT,
+    first_name TEXT,
+    last_name TEXT,
+    profile_completed INTEGER DEFAULT 0,
     photo_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -49,5 +52,16 @@ db.exec(`
     UNIQUE(group_id, user_id)
   );
 `);
+
+// Migraciones para bases de datos existentes
+try {
+  db.exec('ALTER TABLE users ADD COLUMN first_name TEXT');
+} catch (e) {}
+try {
+  db.exec('ALTER TABLE users ADD COLUMN last_name TEXT');
+} catch (e) {}
+try {
+  db.exec('ALTER TABLE users ADD COLUMN profile_completed INTEGER DEFAULT 0');
+} catch (e) {}
 
 module.exports = db;

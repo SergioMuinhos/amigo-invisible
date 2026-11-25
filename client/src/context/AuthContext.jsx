@@ -18,18 +18,31 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const idToken = await getIdToken(firebaseUser);
-        setUser({
+        let userData = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           name: firebaseUser.displayName,
           picture: firebaseUser.photoURL,
-        });
-        setToken(idToken);
+          profileCompleted: true,
+        };
+
         try {
-          await api.verifyAuth(idToken);
+          const res = await api.verifyAuth(idToken);
+          if (res?.user) {
+            userData = {
+              ...userData,
+              name: res.user.name || userData.name,
+              firstName: res.user.firstName,
+              lastName: res.user.lastName,
+              profileCompleted: res.user.profileCompleted ?? true,
+            };
+          }
         } catch (err) {
           console.warn('Sync verifyAuth:', err.message);
         }
+
+        setUser(userData);
+        setToken(idToken);
       } else {
         setUser(null);
         setToken(null);
@@ -40,6 +53,21 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
+  const updateProfile = async ({ firstName, lastName, displayName }) => {
+    if (!token) return;
+    const res = await api.updateProfile(token, { firstName, lastName, displayName });
+    if (res?.user) {
+      setUser((prev) => ({
+        ...prev,
+        name: res.user.name,
+        firstName: res.user.firstName,
+        lastName: res.user.lastName,
+        profileCompleted: true,
+      }));
+    }
+    return res.user;
+  };
+
   const logout = async () => {
     await signOut(auth);
     setUser(null);
@@ -47,7 +75,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -25,6 +25,12 @@ export const api = {
     request('/auth/check-email', { method: 'POST', body: JSON.stringify({ email }) }),
   verifyAuth: (token, extra = {}) =>
     request('/auth/verify', { method: 'POST', body: JSON.stringify(extra) }, token),
+  updateProfile: (token, { firstName, lastName, displayName }) =>
+    request(
+      '/auth/profile',
+      { method: 'PUT', body: JSON.stringify({ firstName, lastName, displayName }) },
+      token
+    ),
   getGroups: (token) => request('/groups', {}, token),
   createGroup: (token, name) =>
     request('/groups', { method: 'POST', body: JSON.stringify({ name }) }, token),

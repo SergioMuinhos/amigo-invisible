@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
+import ProfileModal from '../components/ProfileModal';
 
 export default function Dashboard() {
   const { user, token, logout } = useAuth();
@@ -13,6 +14,7 @@ export default function Dashboard() {
   // Modals / forms
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [newName, setNewName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [creating, setCreating] = useState(false);
@@ -30,6 +32,13 @@ export default function Dashboard() {
       loadGroups();
     }
   }, [token]);
+
+  // Si el usuario entra por primera vez con Google y no ha completado nombre/apellidos, mostramos el modal
+  useEffect(() => {
+    if (user && user.profileCompleted === false) {
+      setShowProfileModal(true);
+    }
+  }, [user]);
 
   // Auto-hide alerts after 5 seconds
   useEffect(() => {
@@ -133,15 +142,28 @@ export default function Dashboard() {
             </div>
 
             {/* Perfil & Acciones de usuario */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200">
-                <div className="w-8 h-8 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
-                  {userInitial}
+            <div className="flex items-center gap-2 sm:gap-4">
+              <button
+                onClick={() => setShowProfileModal(true)}
+                title="Editar mi nombre y apellidos"
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition text-left group"
+              >
+                <div className="w-8 h-8 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-sm shadow-sm overflow-hidden shrink-0 group-hover:scale-105 transition transform">
+                  {user?.picture ? (
+                    <img src={user.picture} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    userInitial
+                  )}
                 </div>
-                <span className="text-sm font-medium text-slate-700 max-w-[140px] sm:max-w-[200px] truncate hidden xs:inline">
-                  {user?.email || 'Usuario'}
-                </span>
-              </div>
+                <div className="hidden xs:block">
+                  <span className="text-sm font-bold text-slate-800 max-w-[120px] sm:max-w-[180px] truncate block leading-tight group-hover:text-red-600 transition">
+                    {userDisplayName}
+                  </span>
+                  <span className="text-[11px] text-slate-400 block leading-none mt-0.5">
+                    Editar perfil ✏️
+                  </span>
+                </div>
+              </button>
 
               <button
                 onClick={logout}
@@ -605,6 +627,13 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Modal para editar Nombre y Apellidos */}
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        isFirstTime={user?.profileCompleted === false}
+      />
     </div>
   );
 }

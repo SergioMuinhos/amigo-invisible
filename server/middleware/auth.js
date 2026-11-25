@@ -71,7 +71,7 @@ async function authenticate(req, res, next) {
         VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           email = excluded.email,
-          display_name = coalesce(nullif(excluded.display_name, ''), users.display_name),
+          display_name = coalesce(users.display_name, nullif(excluded.display_name, '')),
           photo_url = coalesce(nullif(excluded.photo_url, ''), users.photo_url)
       `).run(uid, email, name || email.split('@')[0] || 'Usuario', picture);
     } catch (syncErr) {
