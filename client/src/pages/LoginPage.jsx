@@ -24,7 +24,7 @@ export default function LoginPage() {
       await signInWithPopup(auth, googleProvider);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Error al iniciar sesión con Google');
+      setError(err.message || 'No se pudo iniciar sesión con Google');
     } finally {
       setGoogleLoading(false);
     }
@@ -42,7 +42,7 @@ export default function LoginPage() {
       }
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Error al autenticar');
+      setError(err.message || 'No se pudo iniciar sesión. Revisa tus datos');
     } finally {
       setLoading(false);
     }
@@ -50,79 +50,86 @@ export default function LoginPage() {
 
   const handleReset = async () => {
     if (!email) {
-      setError('Escribe tu correo primero');
+      setError('Escribe primero tu correo electrónico');
       return;
     }
     try {
       await sendPasswordResetEmail(auth, email);
-      setError('Se envió un enlace de restablecimiento a tu correo');
+      setError('Se envió un enlace para cambiar tu contraseña');
     } catch (err) {
-      setError(err.message || 'Error al restablecer contraseña');
+      setError('No se pudo enviar el enlace');
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-8">
       <div className="flex min-h-screen flex-col justify-center py-12 sm:px-10 lg:px-12 safe-bottom">
-        <div className="w-full max-w-sm space-y-8 bg-white p-8 sm:p-10 rounded-2xl shadow-lg border border-gray-200">
+        <div className="w-full max-w-md space-y-8 bg-white p-8 sm:p-12 rounded-3xl shadow-xl border border-gray-200">
           <div className="text-center">
-            <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-xl">A</span>
+            <div className="w-16 h-16 bg-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <span className="text-white font-bold text-2xl">🎁</span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Amigo Invisible</h1>
-            <p className="text-gray-600 text-sm">
-              Inicia sesión para unirte a tu fiesta
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Amigo Invisible</h1>
+            <p className="text-gray-600 text-lg">
+              Inicia sesión para participar en tu grupo
             </p>
           </div>
 
-          {/* Google */}
+          {/* Botón Google muy grande */}
           <button
             onClick={handleGoogle}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3.5 mb-6 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm sm:text-base transition active:scale-95"
+            aria-label="Iniciar sesión con tu cuenta de Google"
+            className="w-full flex items-center justify-center gap-4 px-6 py-5 border border-gray-300 rounded-2xl bg-white hover:bg-gray-50 text-gray-800 font-bold text-lg sm:text-xl transition active:scale-[0.98] disabled:opacity-50"
           >
             {googleLoading ? (
-              <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : 'Continuar con Google'}
+              <span className="text-lg">Cargando...</span>
+            ) : (
+              <>
+                <span className="text-2xl">🔍</span>
+                <span>Iniciar con Google</span>
+              </>
+            )}
           </button>
 
-          <div className="relative mb-6">
+          <div className="relative mb-8">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-gray-300"></span>
             </div>
-            <span className="relative flex justify-center px-3 text-xs sm:text-sm text-gray-500 bg-white">
-              o continúa con correo
+            <span className="relative flex justify-center px-4 text-base text-gray-500 bg-white">
+              o entra con tu correo
             </span>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3 mb-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="email" className="label-field">
                 Correo electrónico
               </label>
               <input
+                id="email"
                 type="email"
                 autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none text-sm sm:text-base transition"
+                placeholder="tucorreo@ejemplo.com"
+                className="input-field"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="password" className="label-field">
                 Contraseña
               </label>
               <input
+                id="password"
                 type="password"
                 autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none text-sm sm:text-base transition"
+                placeholder="••••••••"
+                className="input-field"
               />
             </div>
             {mode === 'login' && (
@@ -133,26 +140,26 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm sm:text-base rounded-xl disabled:opacity-60 transition active:scale-95"
+              className="btn-primary"
             >
               {loading ? 'Procesando...' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-base text-gray-600">
             ¿No tienes cuenta?{' '}
             <button
               type="button"
               onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-              className="text-red-600 font-semibold hover:underline"
+              className="text-red-600 font-bold underline hover:text-red-700"
             >
-              {mode === 'login' ? 'Regístrate' : 'Ya tienes cuenta, inicia sesión'}
+              {mode === 'login' ? 'Regístrate aquí' : 'Ya tienes cuenta, entra aquí'}
             </button>
           </p>
         </div>
 
         {error && (
-          <div className="w-full max-w-sm p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 shadow-sm">
+          <div className="w-full max-w-md p-4 rounded-2xl bg-red-50 border border-red-200 text-base text-red-700 shadow-sm font-medium">
             {error}
           </div>
         )}

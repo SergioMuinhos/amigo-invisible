@@ -30,6 +30,31 @@ Está diseñado para correr en un **contenedor Docker** y desplegarse fácilment
 
 ---
 
+## ♿ Accesibilidad para personas mayores
+
+Esta aplicación está diseñada pensando en que **cualquier persona**, sin importar su edad o experiencia con la tecnología, pueda usarla sin dificultad.
+
+### Características de accesibilidad
+
+| Característica | Beneficio |
+|--------------|-----------|
+| 🔤 **Texto grande** | Tamaño de fuente base de 18px, fácil de leer sin gafas |
+| 🔘 **Botones enormes** | Mínimo 60px de alto, fáciles de tocar con precisión |
+| 🎨 **Contraste alto** | Colores claros y nítidos para buena visibilidad |
+| ⌨️ **Navegación por teclado** | Indicador de foco muy visible (rojo intenso) |
+| 📱 **Pantallas táctiles** | Espaciado generoso entre elementos para evitar toques accidentales |
+| 🔇 **Sin movimiento innecesario** | Respeta la preferencia de "reducir movimiento" del sistema |
+| 🗣️ **Lenguaje sencillo** | Botones y mensajes con texto claro, sin iconos crípticos solos |
+| ♿ **Lectores de pantalla** | Etiquetas ARIA en todos los botones y campos |
+
+### Principios de diseño
+
+- **Un solo objetivo por pantalla:** Cada vista tiene una acción principal clara.
+- **Texto descriptivo:** Los botones dicen exactamente qué hacen (ej. "Crear grupo", no solo "+").
+- **Feedback inmediato:** Mensajes de éxito y error con iconos (✅ / ❌) y colores claros.
+- **Nunca solo iconos:** Los botones siempre tienen texto acompañante.
+- **Volver atrás evidente:** Botón de "Volver" visible en todas las pantallas internas.
+
 ## 📱 Capturas
 
 > Puedes añadir capturas de pantalla aquí.  
