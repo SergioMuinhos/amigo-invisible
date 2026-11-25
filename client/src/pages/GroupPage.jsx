@@ -22,9 +22,11 @@ export default function GroupPage() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [addName, setAddName] = useState('');
   const [addEmail, setAddEmail] = useState('');
+  const [sendInviteEmail, setSendInviteEmail] = useState(true);
   const [addingMember, setAddingMember] = useState(false);
   const [addError, setAddError] = useState('');
   const [deletingMemberId, setDeletingMemberId] = useState(null);
+  const [resendingMemberId, setResendingMemberId] = useState(null);
 
   // Notificaciones
   const [error, setError] = useState('');
@@ -123,19 +125,37 @@ export default function GroupPage() {
     setAddError('');
     setAddingMember(true);
     try {
-      await api.addMember(token, id, {
+      const res = await api.addMember(token, id, {
         name: addName.trim(),
         email: addEmail.trim(),
+        sendEmail: sendInviteEmail,
       });
       setAddName('');
       setAddEmail('');
       setShowAddModal(false);
-      setSuccess(`¡${addName.trim()} ha sido añadido al grupo!`);
+      setSuccess(res.message || `¡${addName.trim()} ha sido añadido al grupo!`);
       await loadGroup();
+      if (res.resetDraw) {
+        await loadMyAssignment();
+      }
     } catch (err) {
       setAddError(err.message || 'No se pudo añadir al participante');
     } finally {
       setAddingMember(false);
+    }
+  };
+
+  const handleResendInvite = async (member) => {
+    setResendingMemberId(member.id);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await api.resendInvite(token, id, member.id);
+      setSuccess(res.message || `Invitación enviada por correo a ${member.email}`);
+    } catch (err) {
+      setError(err.message || 'No se pudo enviar la invitación por correo');
+    } finally {
+      setResendingMemberId(null);
     }
   };
 
@@ -711,30 +731,44 @@ export default function GroupPage() {
                       {isCreator && (
                         <td className="px-5 py-4 text-center">
                           {!isMemberCreator ? (
-                            <button
-                              onClick={() => handleRemoveMember(m)}
-                              disabled={deletingMemberId === m.id}
-                              title={`Eliminar a ${m.name} del grupo`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 hover:border-red-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-3.5 h-3.5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={2}
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleResendInvite(m)}
+                                disabled={resendingMemberId === m.id}
+                                title={`Enviar / Reenviar correo de invitación a ${m.email}`}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-200 hover:border-blue-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                              <span>
-                                {deletingMemberId === m.id ? 'Eliminando...' : 'Eliminar'}
-                              </span>
-                            </button>
+                                <span>✉️</span>
+                                <span>
+                                  {resendingMemberId === m.id ? 'Enviando...' : 'Invitar'}
+                                </span>
+                              </button>
+
+                              <button
+                                onClick={() => handleRemoveMember(m)}
+                                disabled={deletingMemberId === m.id}
+                                title={`Eliminar a ${m.name} del grupo`}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 hover:border-red-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="w-3.5 h-3.5"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                                <span>
+                                  {deletingMemberId === m.id ? 'Eliminando...' : 'Eliminar'}
+                                </span>
+                              </button>
+                            </div>
                           ) : (
                             <span className="text-xs text-slate-400 italic">—</span>
                           )}
@@ -813,6 +847,26 @@ export default function GroupPage() {
                 <p className="text-xs text-slate-500 mt-2">
                   Se enviará a este correo el amigo que le haya tocado tras el sorteo.
                 </p>
+              </div>
+
+              {/* Opción de enviar email de invitación con el enlace y código */}
+              <div
+                className="flex items-start gap-3 p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200 cursor-pointer select-none"
+                onClick={() => setSendInviteEmail(!sendInviteEmail)}
+              >
+                <input
+                  type="checkbox"
+                  id="modalSendInvite"
+                  checked={sendInviteEmail}
+                  onChange={(e) => setSendInviteEmail(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 text-red-600 rounded border-slate-300 focus:ring-red-500 cursor-pointer"
+                />
+                <label
+                  htmlFor="modalSendInvite"
+                  className="text-xs sm:text-sm font-semibold text-slate-700 cursor-pointer"
+                >
+                  ✉️ Enviar correo de invitación con el enlace directo y código para unirse al grupo
+                </label>
               </div>
 
               <div className="flex gap-3 pt-3">

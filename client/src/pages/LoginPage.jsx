@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   signInWithPopup,
   signInWithEmailAndPassword,
@@ -12,6 +12,9 @@ import { api } from '../api';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const inviteCode = searchParams.get('join');
+
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -22,6 +25,30 @@ export default function LoginPage() {
   const [success, setSuccess] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  useEffect(() => {
+    if (inviteCode) {
+      localStorage.setItem('pendingJoinCode', inviteCode.trim().toUpperCase());
+    }
+  }, [inviteCode]);
+
+  const handlePostAuth = async (token) => {
+    const pendingCode = localStorage.getItem('pendingJoinCode') || inviteCode;
+    if (pendingCode) {
+      try {
+        const res = await api.joinGroup(token, pendingCode.trim().toUpperCase());
+        localStorage.removeItem('pendingJoinCode');
+        if (res?.group?.id) {
+          navigate(`/grupo/${res.group.id}`);
+          return;
+        }
+      } catch (err) {
+        console.warn('Auto join grupo:', err.message);
+        localStorage.removeItem('pendingJoinCode');
+      }
+    }
+    navigate('/dashboard');
+  };
+
   const handleGoogle = async () => {
     setError('');
     setSuccess('');
@@ -30,7 +57,7 @@ export default function LoginPage() {
       const res = await signInWithPopup(auth, googleProvider);
       const token = await res.user.getIdToken();
       await api.verifyAuth(token, { displayName: res.user.displayName });
-      navigate('/dashboard');
+      await handlePostAuth(token);
     } catch (err) {
       console.error(err);
       if (err.code === 'auth/account-exists-with-different-credential') {
@@ -56,7 +83,6 @@ export default function LoginPage() {
 
       setLoading(true);
       try {
-        // Comprobar si el correo ya está registrado en la base de datos
         const check = await api.checkEmail(email.trim());
         if (check.exists) {
           setError('Este correo electrónico ya está registrado. Inicia sesión o utiliza otro correo.');
@@ -69,7 +95,7 @@ export default function LoginPage() {
         await updateProfile(userCredential.user, { displayName: fullName });
         const token = await userCredential.user.getIdToken();
         await api.verifyAuth(token, { displayName: fullName });
-        navigate('/dashboard');
+        await handlePostAuth(token);
       } catch (err) {
         console.error(err);
         if (err.code === 'auth/email-already-in-use') {
@@ -88,7 +114,7 @@ export default function LoginPage() {
         const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
         const token = await userCredential.user.getIdToken();
         await api.verifyAuth(token);
-        navigate('/dashboard');
+        await handlePostAuth(token);
       } catch (err) {
         console.error(err);
         if (
@@ -138,6 +164,22 @@ export default function LoginPage() {
                 : 'Crea tu cuenta con tu nombre y apellido'}
             </p>
           </div>
+
+          {inviteCode && (
+            <div className="mb-6 p-4 rounded-2xl bg-rose-50 border-2 border-rose-200 text-rose-800 text-center animate-fade-in shadow-sm">
+              <span className="text-2xl block mb-1">🎟️</span>
+              <p className="text-xs font-bold uppercase tracking-wider text-rose-500 mb-0.5">
+                Invitación a grupo
+              </p>
+              <p className="text-sm font-bold text-slate-800">
+                ¡Has sido invitado con el código{' '}
+                <span className="font-mono text-red-600 font-extrabold">{inviteCode}</span>!
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                Inicia sesión o regístrate para unirte automáticamente.
+              </p>
+            </div>
+          )}
 
           {/* Botón Google */}
           <button

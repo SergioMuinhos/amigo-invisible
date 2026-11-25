@@ -6,6 +6,7 @@ const { authenticate } = require('../middleware/auth');
 const {
   sendAssignmentEmail,
   sendRejectionNoticeToCreator,
+  sendGroupInvitationEmail,
   isEmailConfigured,
 } = require('../services/mailer');
 
@@ -182,7 +183,7 @@ router.get('/:id', authenticate, (req, res) => {
 // Añadir un participante manualmente al grupo (solo el creador)
 router.post('/:id/members', authenticate, (req, res) => {
   const { id } = req.params;
-  const { name, email } = req.body;
+  const { name, email, sendEmail } = req.body;
 
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'El nombre y apellido son obligatorios' });
@@ -202,9 +203,8 @@ router.post('/:id/members', authenticate, (req, res) => {
     if (group.creator_id !== (req.user.id || req.user.uid)) {
       return res.status(403).json({ error: 'Solo el creador puede añadir participantes directamente' });
     }
-    if (group.assigned) {
-      return res.status(400).json({ error: 'No se pueden añadir participantes después de haber realizado el sorteo' });
-    }
+
+    const wasAssigned = Boolean(group.assigned);
 
     // Comprobar si ya existe un miembro con este email en el grupo
     const existingMember = db
@@ -236,14 +236,47 @@ router.post('/:id/members', authenticate, (req, res) => {
       `).run(cleanName, userId);
     }
 
-    // Añadir al grupo
-    db.prepare(`
-      INSERT INTO members (id, group_id, user_id)
-      VALUES (?, ?, ?)
-    `).run(uuidv4(), id, userId);
+    const tx = db.transaction(() => {
+      // Añadir al grupo
+      db.prepare(`
+        INSERT INTO members (id, group_id, user_id, validation_status)
+        VALUES (?, ?, ?, 'pending')
+      `).run(uuidv4(), id, userId);
+
+      // Si el sorteo ya estaba hecho, se reinicia para que el nuevo miembro quede incluido
+      if (wasAssigned) {
+        db.prepare(
+          `UPDATE members SET assigned_to = NULL, validation_status = 'pending' WHERE group_id = ?`
+        ).run(id);
+        db.prepare(`UPDATE groups SET assigned = 0, emails_sent = 0 WHERE id = ?`).run(id);
+      }
+    });
+    tx();
+
+    // Enviar correo de invitación con el código y enlace directo (por defecto activo)
+    const shouldSendEmail = sendEmail !== false;
+    if (shouldSendEmail) {
+      const creatorUser = db
+        .prepare('SELECT display_name FROM users WHERE id = ?')
+        .get(req.user.id || req.user.uid);
+
+      sendGroupInvitationEmail({
+        recipientEmail: cleanEmail,
+        recipientName: cleanName,
+        creatorName: creatorUser?.display_name || 'El organizador',
+        groupName: group.name,
+        groupCode: group.code,
+        groupId: group.id,
+      }).catch((err) => console.error('Error enviando invitación por correo:', err.message));
+    }
 
     res.status(201).json({
-      message: 'Participante añadido correctamente',
+      message: wasAssigned
+        ? `Participante añadido. Se ha enviado un email de invitación a ${cleanEmail} y el sorteo se ha reiniciado para incluirlo en la próxima tirada.`
+        : shouldSendEmail
+        ? `Participante añadido y correo de invitación enviado a ${cleanEmail}.`
+        : 'Participante añadido correctamente.',
+      resetDraw: wasAssigned,
       member: {
         id: userId,
         name: cleanName,
@@ -253,6 +286,50 @@ router.post('/:id/members', authenticate, (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al añadir participante' });
+  }
+});
+
+// Reenviar email de invitación a un participante
+router.post('/:id/members/:userId/resend-invite', authenticate, (req, res) => {
+  const { id, userId } = req.params;
+
+  try {
+    const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(id);
+    if (!group) return res.status(404).json({ error: 'Grupo no encontrado' });
+    if (group.creator_id !== (req.user.id || req.user.uid)) {
+      return res.status(403).json({ error: 'Solo el creador puede reenviar invitaciones' });
+    }
+
+    const member = db
+      .prepare(`
+        SELECT u.display_name, u.email 
+        FROM members m
+        JOIN users u ON u.id = m.user_id
+        WHERE m.group_id = ? AND m.user_id = ?
+      `)
+      .get(id, userId);
+
+    if (!member || !member.email) {
+      return res.status(404).json({ error: 'Participante no encontrado o sin correo' });
+    }
+
+    const creatorUser = db
+      .prepare('SELECT display_name FROM users WHERE id = ?')
+      .get(req.user.id || req.user.uid);
+
+    sendGroupInvitationEmail({
+      recipientEmail: member.email,
+      recipientName: member.display_name,
+      creatorName: creatorUser?.display_name || 'El organizador',
+      groupName: group.name,
+      groupCode: group.code,
+      groupId: group.id,
+    }).catch((err) => console.error('Error reenviando invitación:', err.message));
+
+    res.json({ message: `Invitación reenviada a ${member.email}` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al reenviar la invitación' });
   }
 });
 

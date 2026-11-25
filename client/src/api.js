@@ -41,12 +41,14 @@ export const api = {
       token
     ),
   getGroup: (token, id) => request(`/groups/${id}`, {}, token),
-  addMember: (token, id, { name, email }) =>
+  addMember: (token, id, { name, email, sendEmail = true }) =>
     request(
       `/groups/${id}/members`,
-      { method: 'POST', body: JSON.stringify({ name, email }) },
+      { method: 'POST', body: JSON.stringify({ name, email, sendEmail }) },
       token
     ),
+  resendInvite: (token, id, userId) =>
+    request(`/groups/${id}/members/${userId}/resend-invite`, { method: 'POST' }, token),
   removeMember: (token, groupId, userId) =>
     request(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' }, token),
   assignGroup: (token, id) =>

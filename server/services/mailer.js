@@ -317,4 +317,123 @@ async function sendRejectionNoticeToCreator({
   return { success: true, simulated: true };
 }
 
-module.exports = { sendAssignmentEmail, sendRejectionNoticeToCreator, isEmailConfigured };
+/**
+ * Envía una invitación por correo a un participante con el enlace directo y el código para unirse al grupo.
+ */
+async function sendGroupInvitationEmail({
+  recipientEmail,
+  recipientName,
+  creatorName,
+  groupName,
+  groupCode,
+  groupId,
+}) {
+  if (!recipientEmail) return { success: false, error: 'Email del destinatario no especificado' };
+
+  const appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+  const joinUrl = `${appUrl}/login?join=${groupCode}`;
+
+  const subject = `🎁 ${creatorName} te ha invitado al Amigo Invisible en "${groupName}"`;
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Invitación a Amigo Invisible</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b; }
+        .card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
+        .header { background: linear-gradient(135deg, #e11d48, #be123c); padding: 36px 24px; text-align: center; color: #ffffff; }
+        .body { padding: 32px 24px; text-align: center; }
+        .code-box { background-color: #fff1f2; border: 2px dashed #f43f5e; border-radius: 16px; padding: 20px; margin: 24px 0; text-align: center; }
+        .code { font-family: monospace; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #be123c; }
+        .button { display: inline-block; background: linear-gradient(135deg, #e11d48, #be123c); color: #ffffff !important; text-decoration: none; padding: 16px 36px; border-radius: 16px; font-weight: 800; font-size: 16px; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35); margin-top: 10px; }
+        .footer { padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="header">
+          <div style="font-size: 48px; margin-bottom: 8px;">🎁</div>
+          <h1 style="margin: 0; font-size: 24px; font-weight: 800;">¡Has sido invitado al Amigo Invisible!</h1>
+          <p style="margin: 8px 0 0 0; opacity: 0.95; font-size: 16px;">Grupo: <strong>${groupName}</strong></p>
+        </div>
+        <div class="body">
+          <p style="font-size: 16px; margin-top: 0; text-align: left;">
+            Hola <strong>${recipientName || 'amigo/a'}</strong>,
+          </p>
+          <p style="font-size: 15px; line-height: 1.6; color: #475569; text-align: left;">
+            <strong>${creatorName}</strong> te ha invitado a participar en el intercambio de regalos de Amigo Invisible para el grupo <strong>"${groupName}"</strong>.
+          </p>
+
+          <div class="code-box">
+            <span style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9f1239; letter-spacing: 1px; display: block; margin-bottom: 6px;">Código de invitación</span>
+            <div class="code">${groupCode}</div>
+          </div>
+
+          <p style="font-size: 15px; color: #475569; margin-bottom: 24px;">
+            Haz clic en el siguiente botón para unirte directamente a la fiesta:
+          </p>
+
+          <div>
+            <a href="${joinUrl}" class="button">Unirme al Grupo de Regalos ✨</a>
+          </div>
+
+          <p style="font-size: 13px; color: #94a3b8; margin-top: 24px;">
+            O entra en <a href="${appUrl}" style="color: #e11d48; text-decoration: underline;">${appUrl}</a> e introduce el código manualmente: <strong>${groupCode}</strong>
+          </p>
+        </div>
+        <div class="footer">
+          <p style="margin: 0;">Amigo Invisible · La forma más fácil de organizar sorteos</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Envío vía Gmail SMTP o Resend
+  const smtp = getSmtpTransporter();
+  if (smtp) {
+    try {
+      const from = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER;
+      const info = await smtp.sendMail({
+        from: `Amigo Invisible <${from}>`,
+        to: recipientEmail,
+        subject,
+        html: htmlContent,
+      });
+      console.log(`[INVITACIÓN ENVIADA GMAIL] A: ${recipientEmail} -> ID: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`[INVITACIÓN ERROR GMAIL] A: ${recipientEmail}:`, err.message);
+    }
+  }
+
+  const resend = getResendClient();
+  if (resend) {
+    try {
+      const from = process.env.EMAIL_FROM || 'Amigo Invisible <onboarding@resend.dev>';
+      const { data } = await resend.emails.send({
+        from,
+        to: recipientEmail,
+        subject,
+        html: htmlContent,
+      });
+      console.log(`[INVITACIÓN ENVIADA RESEND] A: ${recipientEmail} -> ID: ${data?.id}`);
+      return { success: true, messageId: data?.id };
+    } catch (err) {
+      console.error(`[INVITACIÓN ERROR RESEND]:`, err.message);
+    }
+  }
+
+  console.log(`[INVITACIÓN SIMULADA] A: ${recipientEmail} (${recipientName}) para grupo ${groupName} con código ${groupCode}`);
+  return { success: true, simulated: true };
+}
+
+module.exports = {
+  sendAssignmentEmail,
+  sendRejectionNoticeToCreator,
+  sendGroupInvitationEmail,
+  isEmailConfigured,
+};
