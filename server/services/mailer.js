@@ -1,9 +1,19 @@
+const { Resend } = require('resend');
 const nodemailer = require('nodemailer');
 
-let transporter = null;
+let resendClient = null;
+let smtpTransporter = null;
 
-function getTransporter() {
-  if (transporter) return transporter;
+function getResendClient() {
+  if (resendClient) return resendClient;
+  if (process.env.RESEND_API_KEY) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
+
+function getSmtpTransporter() {
+  if (smtpTransporter) return smtpTransporter;
 
   const host = process.env.SMTP_HOST;
   const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
@@ -12,12 +22,12 @@ function getTransporter() {
 
   if (user && pass) {
     if (process.env.SMTP_SERVICE === 'gmail' || (!host && user.endsWith('@gmail.com'))) {
-      transporter = nodemailer.createTransport({
+      smtpTransporter = nodemailer.createTransport({
         service: 'gmail',
         auth: { user, pass },
       });
     } else if (host) {
-      transporter = nodemailer.createTransport({
+      smtpTransporter = nodemailer.createTransport({
         host,
         port,
         secure: port === 465,
@@ -26,7 +36,14 @@ function getTransporter() {
     }
   }
 
-  return transporter;
+  return smtpTransporter;
+}
+
+function isEmailConfigured() {
+  if (process.env.RESEND_API_KEY) return true;
+  const user = process.env.SMTP_USER || process.env.GMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
+  return Boolean(user && pass);
 }
 
 /**
@@ -41,9 +58,6 @@ async function sendAssignmentEmail({
   groupName,
   groupId,
 }) {
-  const mailTransporter = getTransporter();
-  const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@amigoinvisible.app';
-
   // Asunto discreto (NO revela a quién le ha tocado para evitar spoilers en notificaciones)
   const subject = `🎁 Tu Amigo Invisible - Grupo: ${groupName}`;
 
@@ -128,38 +142,60 @@ async function sendAssignmentEmail({
 </html>
   `;
 
-  if (!mailTransporter) {
-    console.log(`\n======================================================`);
-    console.log(`[EMAIL SIMULADO - SMTP no configurado]`);
-    console.log(`Para: ${giverEmail} (${giverName})`);
-    console.log(`Asunto discreto: ${subject}`);
-    console.log(`Amigo invisible asignado: ${receiverName} (${receiverEmail})`);
-    console.log(`Grupo: ${groupName}`);
-    console.log(`(Para enviar emails reales, configura SMTP_HOST o GMAIL_USER/GMAIL_PASS en server/.env)`);
-    console.log(`======================================================\n`);
-    return { success: true, simulated: true };
+  // 1. Envío prioritario con Resend API
+  const resend = getResendClient();
+  if (resend) {
+    try {
+      const from = process.env.EMAIL_FROM || 'Amigo Invisible <onboarding@resend.dev>';
+      const { data, error } = await resend.emails.send({
+        from,
+        to: giverEmail,
+        subject,
+        html: htmlContent,
+      });
+
+      if (error) {
+        console.error(`[RESEND ERROR] A: ${giverEmail}:`, error.message || error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`[RESEND ENVIADO CON ÉXITO] A: ${giverEmail} -> ID: ${data?.id}`);
+      return { success: true, messageId: data?.id };
+    } catch (err) {
+      console.error(`[RESEND EXCEPCIÓN] A: ${giverEmail}:`, err.message);
+      return { success: false, error: err.message };
+    }
   }
 
-  try {
-    const info = await mailTransporter.sendMail({
-      from: `"Amigo Invisible" <${fromAddress}>`,
-      to: giverEmail,
-      subject,
-      html: htmlContent,
-      text: `¡Hola ${giverName}! En el grupo "${groupName}", te ha tocado regalarle a: ${receiverName}. ¡Recuerda guardar el secreto! Más info en: ${groupUrl}`,
-    });
-    console.log(`[EMAIL ENVIADO] A: ${giverEmail} -> ID: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
-  } catch (err) {
-    console.error(`[ERROR ENVIANDO EMAIL] A: ${giverEmail}:`, err.message);
-    return { success: false, error: err.message };
+  // 2. Envío secundario con SMTP / Nodemailer
+  const mailTransporter = getSmtpTransporter();
+  if (mailTransporter) {
+    const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@amigoinvisible.app';
+    try {
+      const info = await mailTransporter.sendMail({
+        from: `"Amigo Invisible" <${fromAddress}>`,
+        to: giverEmail,
+        subject,
+        html: htmlContent,
+        text: `¡Hola ${giverName}! En el grupo "${groupName}", te ha tocado regalarle a: ${receiverName}. ¡Recuerda guardar el secreto! Más info en: ${groupUrl}`,
+      });
+      console.log(`[SMTP ENVIADO CON ÉXITO] A: ${giverEmail} -> ID: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`[SMTP ERROR] A: ${giverEmail}:`, err.message);
+      return { success: false, error: err.message };
+    }
   }
-}
 
-function isEmailConfigured() {
-  const user = process.env.SMTP_USER || process.env.GMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
-  return Boolean(user && pass);
+  // 3. Simulación si no hay credenciales
+  console.log(`\n======================================================`);
+  console.log(`[EMAIL SIMULADO - Sin credenciales de correo]`);
+  console.log(`Para: ${giverEmail} (${giverName})`);
+  console.log(`Asunto discreto: ${subject}`);
+  console.log(`Amigo invisible asignado: ${receiverName} (${receiverEmail})`);
+  console.log(`Grupo: ${groupName}`);
+  console.log(`======================================================\n`);
+  return { success: true, simulated: true };
 }
 
 module.exports = { sendAssignmentEmail, isEmailConfigured };
