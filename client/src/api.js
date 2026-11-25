@@ -41,6 +41,8 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ name, email }) },
       token
     ),
+  removeMember: (token, groupId, userId) =>
+    request(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' }, token),
   assignGroup: (token, id) =>
     request(`/groups/${id}/assign`, { method: 'POST' }, token),
   getMyAssignment: (token, id) =>

@@ -229,6 +229,57 @@ router.post('/:id/members', authenticate, (req, res) => {
   }
 });
 
+// Eliminar un participante del grupo (solo el creador)
+router.delete('/:id/members/:userId', authenticate, (req, res) => {
+  const { id, userId } = req.params;
+
+  try {
+    const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(id);
+    if (!group) {
+      return res.status(404).json({ error: 'Grupo no encontrado' });
+    }
+
+    const currentUserId = req.user.id || req.user.uid;
+    if (group.creator_id !== currentUserId) {
+      return res.status(403).json({ error: 'Solo el creador del grupo puede eliminar participantes' });
+    }
+
+    if (userId === group.creator_id) {
+      return res.status(400).json({ error: 'El creador no puede ser eliminado del grupo' });
+    }
+
+    const member = db
+      .prepare('SELECT id FROM members WHERE group_id = ? AND user_id = ?')
+      .get(id, userId);
+
+    if (!member) {
+      return res.status(404).json({ error: 'El usuario no es miembro de este grupo' });
+    }
+
+    const tx = db.transaction(() => {
+      // Eliminar el miembro
+      db.prepare('DELETE FROM members WHERE group_id = ? AND user_id = ?').run(id, userId);
+
+      // Si el sorteo ya estaba hecho, se reinicia para mantener la integridad del amigo invisible
+      if (group.assigned) {
+        db.prepare('UPDATE members SET assigned_to = NULL WHERE group_id = ?').run(id);
+        db.prepare('UPDATE groups SET assigned = 0 WHERE id = ?').run(id);
+      }
+    });
+    tx();
+
+    res.json({
+      message: group.assigned
+        ? 'Participante eliminado. El sorteo ha sido reiniciado porque cambió la lista de miembros.'
+        : 'Participante eliminado del grupo.',
+      resetDraw: Boolean(group.assigned),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar participante' });
+  }
+});
+
 // Asignar amigo invisible aleatoriamente dentro del grupo y enviar emails
 router.post('/:id/assign', authenticate, async (req, res) => {
   const { id } = req.params;
