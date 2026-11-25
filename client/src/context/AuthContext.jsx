@@ -5,6 +5,7 @@ import {
   getIdToken,
 } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
+import { api } from '../api';
 
 const AuthContext = createContext(null);
 
@@ -24,6 +25,11 @@ export function AuthProvider({ children }) {
           picture: firebaseUser.photoURL,
         });
         setToken(idToken);
+        try {
+          await api.verifyAuth(idToken);
+        } catch (err) {
+          console.warn('Sync verifyAuth:', err.message);
+        }
       } else {
         setUser(null);
         setToken(null);

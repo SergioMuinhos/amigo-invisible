@@ -1,4 +1,5 @@
 const admin = require('firebase-admin');
+const db = require('../db');
 
 // Inicializar Firebase Admin si existe la configuración
 let adminApp = null;
@@ -35,26 +36,46 @@ async function authenticate(req, res, next) {
   const idToken = authHeader.split('Bearer ')[1];
 
   try {
+    let uid, email, name, picture;
+
     // Si no hay Admin SDK configurado, aceptamos el token y decodificamos el payload sin firmar
     // solo para desarrollo. En producción configurar FIREBASE_* en el entorno.
     if (!adminApp) {
       const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
-      req.user = {
-        uid: payload.user_id || payload.sub,
-        email: payload.email,
-        name: payload.name || '',
-        picture: payload.picture || '',
-      };
-      return next();
+      uid = payload.user_id || payload.sub;
+      email = payload.email || '';
+      name = payload.name || '';
+      picture = payload.picture || '';
+    } else {
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      uid = decodedToken.uid;
+      email = decodedToken.email || '';
+      name = decodedToken.name || '';
+      picture = decodedToken.picture || '';
     }
 
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
     req.user = {
-      uid: decodedToken.uid,
-      email: decodedToken.email || '',
-      name: decodedToken.name || '',
-      picture: decodedToken.picture || '',
+      id: uid,
+      uid,
+      email,
+      name,
+      picture,
     };
+
+    // Asegurar que el usuario existe en la tabla SQLite para cumplir con las claves foráneas
+    try {
+      db.prepare(`
+        INSERT INTO users (id, email, display_name, photo_url)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          email = excluded.email,
+          display_name = coalesce(nullif(excluded.display_name, ''), users.display_name),
+          photo_url = coalesce(nullif(excluded.photo_url, ''), users.photo_url)
+      `).run(uid, email, name || email.split('@')[0] || 'Usuario', picture);
+    } catch (syncErr) {
+      console.warn('Error sincronizando usuario en DB:', syncErr.message);
+    }
+
     next();
   } catch (err) {
     console.error('Error verificando token:', err.message);

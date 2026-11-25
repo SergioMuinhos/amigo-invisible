@@ -17,6 +17,8 @@ export default function Dashboard() {
   const [joinCode, setJoinCode] = useState('');
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [joinError, setJoinError] = useState('');
 
   // Feedback messages
   const [error, setError] = useState('');
@@ -56,19 +58,20 @@ export default function Dashboard() {
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!newName.trim()) return;
-    setError('');
+    setCreateError('');
     setCreating(true);
     try {
       const res = await api.createGroup(token, newName.trim());
       setNewName('');
       setShowCreateModal(false);
       setSuccess('¡Grupo creado con éxito! Ya puedes compartir el código.');
-      await loadGroups();
       if (res.group?.id) {
         navigate(`/grupo/${res.group.id}`);
+      } else {
+        await loadGroups();
       }
     } catch (err) {
-      setError(err.message || 'No se pudo crear el grupo');
+      setCreateError(err.message || 'No se pudo crear el grupo');
     } finally {
       setCreating(false);
     }
@@ -77,19 +80,20 @@ export default function Dashboard() {
   const handleJoin = async (e) => {
     e.preventDefault();
     if (!joinCode.trim()) return;
-    setError('');
+    setJoinError('');
     setJoining(true);
     try {
       const res = await api.joinGroup(token, joinCode.trim().toUpperCase());
       setJoinCode('');
       setShowJoinModal(false);
       setSuccess('¡Te has unido al grupo correctamente!');
-      await loadGroups();
       if (res.group?.id) {
         navigate(`/grupo/${res.group.id}`);
+      } else {
+        await loadGroups();
       }
     } catch (err) {
-      setError(err.message || 'Código incorrecto o el grupo no existe');
+      setJoinError(err.message || 'Código incorrecto o el grupo no existe');
     } finally {
       setJoining(false);
     }
@@ -466,6 +470,7 @@ export default function Dashboard() {
                 onClick={() => {
                   setShowCreateModal(false);
                   setNewName('');
+                  setCreateError('');
                 }}
                 className="text-slate-400 hover:text-slate-600 p-2 text-xl leading-none"
               >
@@ -474,6 +479,12 @@ export default function Dashboard() {
             </div>
 
             <form onSubmit={handleCreate} className="space-y-5">
+              {createError && (
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{createError}</span>
+                </div>
+              )}
               <div>
                 <label htmlFor="modalGroupName" className="label-field">
                   Nombre del grupo
@@ -499,6 +510,7 @@ export default function Dashboard() {
                   onClick={() => {
                     setShowCreateModal(false);
                     setNewName('');
+                    setCreateError('');
                   }}
                   className="btn-secondary flex-1"
                 >
@@ -534,6 +546,7 @@ export default function Dashboard() {
                 onClick={() => {
                   setShowJoinModal(false);
                   setJoinCode('');
+                  setJoinError('');
                 }}
                 className="text-slate-400 hover:text-slate-600 p-2 text-xl leading-none"
               >
@@ -542,6 +555,12 @@ export default function Dashboard() {
             </div>
 
             <form onSubmit={handleJoin} className="space-y-5">
+              {joinError && (
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{joinError}</span>
+                </div>
+              )}
               <div>
                 <label htmlFor="modalJoinCode" className="label-field">
                   Código de invitación
@@ -568,6 +587,7 @@ export default function Dashboard() {
                   onClick={() => {
                     setShowJoinModal(false);
                     setJoinCode('');
+                    setJoinError('');
                   }}
                   className="btn-secondary flex-1"
                 >
