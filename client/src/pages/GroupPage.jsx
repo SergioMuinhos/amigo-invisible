@@ -50,6 +50,19 @@ export default function GroupPage() {
     }
   }, [token, id]);
 
+  // Accesibilidad: Cerrar modal con tecla Escape
+  useEffect(() => {
+    if (!showAddModal) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowAddModal(false);
+        setAddError('');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAddModal]);
+
   const loadGroup = async () => {
     try {
       setLoading(true);
@@ -643,9 +656,13 @@ export default function GroupPage() {
           </div>
         </div>
 
-        {/* Notificaciones */}
+        {/* Notificaciones con roles de accesibilidad */}
         {success && (
-          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium flex items-center justify-between shadow-sm animate-fade-in">
+          <div
+            role="status"
+            aria-live="polite"
+            className="mb-6 p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium flex items-center justify-between shadow-sm animate-fade-in"
+          >
             <div className="flex items-center gap-3">
               <span className="text-2xl">✅</span>
               <span>{success}</span>
@@ -660,7 +677,11 @@ export default function GroupPage() {
         )}
 
         {error && (
-          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 font-medium flex items-center justify-between shadow-sm animate-fade-in">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mb-6 p-4 sm:p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 font-medium flex items-center justify-between shadow-sm animate-fade-in"
+          >
             <div className="flex items-center gap-3">
               <span className="text-2xl">⚠️</span>
               <span>{error}</span>
@@ -1187,14 +1208,25 @@ export default function GroupPage() {
 
       {/* Modal para que el creador añada participantes directamente */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-participant-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowAddModal(false);
+              setAddError('');
+            }
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
+        >
           <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl font-bold">
                   👤
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                <h3 id="add-participant-title" className="text-xl sm:text-2xl font-bold text-slate-900">
                   Añadir participante
                 </h3>
               </div>
@@ -1211,7 +1243,11 @@ export default function GroupPage() {
 
             <form onSubmit={handleAddMember} className="space-y-4">
               {addError && (
-                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
+                <div
+                  role="alert"
+                  aria-live="assertive"
+                  className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2"
+                >
                   <span>⚠️</span>
                   <span>{addError}</span>
                 </div>
@@ -1224,6 +1260,7 @@ export default function GroupPage() {
                 <input
                   id="participantName"
                   type="text"
+                  autoComplete="name"
                   autoFocus
                   required
                   value={addName}

@@ -221,16 +221,24 @@ export default function LoginPage() {
             </span>
           </div>
 
-          {/* Alertas */}
+          {/* Alertas con roles de accesibilidad modernos */}
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2"
+            >
               <span>⚠️</span>
               <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center gap-2">
+            <div
+              role="status"
+              aria-live="polite"
+              className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center gap-2"
+            >
               <span>✅</span>
               <span>{success}</span>
             </div>
@@ -247,6 +255,7 @@ export default function LoginPage() {
                   <input
                     id="firstName"
                     type="text"
+                    autoComplete="given-name"
                     required
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
@@ -261,6 +270,7 @@ export default function LoginPage() {
                   <input
                     id="lastName"
                     type="text"
+                    autoComplete="family-name"
                     required
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}

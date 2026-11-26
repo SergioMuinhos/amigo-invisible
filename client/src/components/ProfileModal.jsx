@@ -27,6 +27,16 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
     }
   }, [isOpen, user]);
 
+  // Accesibilidad: Cerrar con tecla Escape (si no es primera vez obligatoria)
+  useEffect(() => {
+    if (!isOpen || isFirstTime) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isFirstTime, onClose]);
+
   if (!isOpen) return null;
 
   const previewName = `${firstName.trim()} ${lastName.trim()}`.trim() || 'Tu Nombre y Apellidos';
@@ -60,6 +70,12 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="profile-modal-title"
+      onClick={(e) => {
+        if (!isFirstTime && e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 transform transition-all">
         {/* Encabezado decorativo */}
@@ -69,7 +85,7 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
               {isFirstTime ? '👋' : '✏️'}
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+              <h2 id="profile-modal-title" className="text-xl sm:text-2xl font-black tracking-tight">
                 {isFirstTime ? '¡Bienvenido/a!' : 'Mi Perfil'}
               </h2>
               <p className="text-red-100 text-sm mt-1">
@@ -116,6 +132,7 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
               <input
                 id="profile-firstName"
                 type="text"
+                autoComplete="given-name"
                 required
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -131,6 +148,7 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
               <input
                 id="profile-lastName"
                 type="text"
+                autoComplete="family-name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Ej. García López"
