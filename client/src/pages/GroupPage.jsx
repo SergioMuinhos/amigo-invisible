@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import ProfileModal from '../components/ProfileModal';
 import Tooltip from '../components/Tooltip';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function GroupPage() {
   const { id } = useParams();
@@ -438,25 +439,27 @@ export default function GroupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
       {/* Navegación superior */}
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm backdrop-blur-md bg-white/95">
+      <nav className="bg-white/95 dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-sm backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 sm:h-20 items-center">
             <button
               onClick={() => navigate('/dashboard')}
               aria-label="Volver al panel"
-              className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-semibold text-sm sm:text-base py-2 px-3 rounded-xl hover:bg-slate-100 transition"
+              className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 font-semibold text-sm sm:text-base py-2 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             >
               <span>←</span>
               <span>Volver a grupos</span>
             </button>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <ThemeToggle />
+
               <Tooltip text="Editar mi nombre y apellidos">
                 <button
                   onClick={() => setShowProfileModal(true)}
-                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition text-left group"
+                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition text-left group"
                 >
                   <div className="w-8 h-8 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden shrink-0 group-hover:scale-105 transition transform">
                     {user?.picture ? (
@@ -466,10 +469,10 @@ export default function GroupPage() {
                     )}
                   </div>
                   <div className="hidden xs:block">
-                    <span className="text-xs sm:text-sm font-bold text-slate-800 max-w-[120px] sm:max-w-[160px] truncate block leading-tight group-hover:text-red-600 transition">
+                    <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 max-w-[120px] sm:max-w-[160px] truncate block leading-tight group-hover:text-red-600 dark:group-hover:text-red-400 transition">
                       {user?.name || user?.email?.split('@')[0]}
                     </span>
-                    <span className="text-[10px] text-slate-400 block leading-none mt-0.5">
+                    <span className="text-[10px] text-slate-400 dark:text-slate-400 block leading-none mt-0.5">
                       Editar perfil ✏️
                     </span>
                   </div>
@@ -478,7 +481,7 @@ export default function GroupPage() {
 
               <button
                 onClick={logout}
-                className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-red-600 py-2 px-3 rounded-xl hover:bg-red-50 border border-slate-200 hover:border-red-200 transition"
+                className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 py-2 px-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 border border-slate-200 dark:border-slate-700 hover:border-red-200 dark:hover:border-red-800 transition"
               >
                 Cerrar sesión
               </button>
@@ -490,7 +493,7 @@ export default function GroupPage() {
       {/* Contenido principal */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {/* Cabecera del Grupo */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm mb-8">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-3 mb-2 flex-wrap">
@@ -502,7 +505,7 @@ export default function GroupPage() {
                       required
                       value={editedName}
                       onChange={(e) => setEditedName(e.target.value)}
-                      className="text-xl sm:text-3xl font-extrabold text-slate-900 border-2 border-red-500 rounded-2xl px-3 py-1.5 focus:outline-none focus:ring-4 focus:ring-red-100 shadow-sm"
+                      className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 border-2 border-red-500 rounded-2xl px-3 py-1.5 focus:outline-none focus:ring-4 focus:ring-red-100 dark:focus:ring-red-950 shadow-sm"
                       placeholder="Nombre del grupo"
                     />
                     <button
@@ -518,14 +521,14 @@ export default function GroupPage() {
                         setIsEditingName(false);
                         setEditedName(group.name);
                       }}
-                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition"
+                      className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs sm:text-sm rounded-xl transition"
                     >
                       Cancelar
                     </button>
                   </form>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                    <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                       {group.name}
                     </h1>
                     {isCreator && (
@@ -536,7 +539,7 @@ export default function GroupPage() {
                             setIsEditingName(true);
                           }}
                           aria-label="Cambiar nombre del grupo"
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl border border-transparent hover:border-red-200 transition"
+                          className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl border border-transparent hover:border-red-200 dark:hover:border-red-800 transition"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -560,8 +563,8 @@ export default function GroupPage() {
                 <span
                   className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                     group.assigned
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                      : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
                   }`}
                 >
                   <span
@@ -572,7 +575,7 @@ export default function GroupPage() {
                   {group.assigned ? 'Sorteo realizado' : 'Pendiente de sorteo'}
                 </span>
                 {isCreator && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
                     👑 Creador del grupo
                   </span>
                 )}
@@ -580,20 +583,20 @@ export default function GroupPage() {
 
               {/* Código de Invitación con copia rápida */}
               <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <span className="text-sm font-medium text-slate-500">
+                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
                   Código de invitación:
                 </span>
-                <span className="font-mono font-bold text-base bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200 tracking-widest">
+                <span className="font-mono font-bold text-base bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 tracking-widest">
                   {group.code}
                 </span>
                 <button
                   onClick={handleCopyCode}
-                  className="px-3 py-1 text-xs font-bold rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 transition flex items-center gap-1"
+                  className="px-3 py-1 text-xs font-bold rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition flex items-center gap-1"
                 >
                   {copiedCode ? (
                     <>
-                      <span className="text-emerald-600">✓</span>
-                      <span className="text-emerald-600">¡Copiado!</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">✓</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">¡Copiado!</span>
                     </>
                   ) : (
                     <>
@@ -629,7 +632,7 @@ export default function GroupPage() {
                       <button
                         onClick={handleAssign}
                         disabled={assigning}
-                        className="px-4 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white shadow-md shadow-red-200 transition transform active:scale-95 disabled:opacity-50"
+                        className="px-4 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white shadow-md shadow-red-200 dark:shadow-none transition transform active:scale-95 disabled:opacity-50"
                       >
                         {assigning ? 'Sorteando...' : '🎲 Volver a sortear'}
                       </button>
@@ -639,7 +642,7 @@ export default function GroupPage() {
                       <button
                         onClick={handleReset}
                         disabled={resetting}
-                        className="px-4 py-2.5 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                        className="px-4 py-2.5 rounded-xl font-bold text-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
                       >
                         <span>🔄</span>
                         <span>{resetting ? 'Reiniciando...' : 'Reiniciar sorteo'}</span>
@@ -652,7 +655,7 @@ export default function GroupPage() {
                   <button
                     onClick={handleDeleteGroup}
                     disabled={deletingGroup}
-                    className="px-3.5 py-2.5 rounded-xl font-bold text-sm bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    className="px-3.5 py-2.5 rounded-xl font-bold text-sm bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
                   >
                     <span>🗑️</span>
                     <span>{deletingGroup ? 'Eliminando...' : 'Eliminar grupo'}</span>
@@ -734,26 +737,26 @@ export default function GroupPage() {
         )}
 
         {/* Tu Amigo Invisible (Revelación) */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm mb-8">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm mb-8">
           <div className="flex items-center gap-3 mb-4">
             <span className="text-2xl">🎁</span>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
               Tu Amigo Invisible
             </h2>
           </div>
 
           {myAssignment?.assigned && myAssignment?.assignedTo ? (
-            <div className="bg-gradient-to-tr from-rose-50 to-red-50 border-2 border-red-200 rounded-2xl p-6 sm:p-8 text-center sm:text-left">
-              <span className="text-xs uppercase font-extrabold text-red-600 tracking-wider block mb-2">
+            <div className="bg-gradient-to-tr from-rose-50 to-red-50 dark:from-rose-950/40 dark:to-red-950/30 border-2 border-red-200 dark:border-red-900/60 rounded-2xl p-6 sm:p-8 text-center sm:text-left">
+              <span className="text-xs uppercase font-extrabold text-red-600 dark:text-red-400 tracking-wider block mb-2">
                 ✨ Te ha tocado regalarle a ✨
               </span>
-              <div className="text-3xl sm:text-4xl font-extrabold text-red-700 mb-1">
+              <div className="text-3xl sm:text-4xl font-extrabold text-red-700 dark:text-red-400 mb-1">
                 {myAssignment.assignedTo.name}
               </div>
-              <p className="text-slate-600 text-sm sm:text-base font-medium">
+              <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base font-medium">
                 {myAssignment.assignedTo.email}
               </p>
-              <div className="mt-4 pt-4 border-t border-red-200/60 text-xs sm:text-sm text-slate-500 flex items-center gap-2 justify-center sm:justify-start">
+              <div className="mt-4 pt-4 border-t border-red-200/60 dark:border-red-900/40 text-xs sm:text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2 justify-center sm:justify-start">
                 <span>🤫</span>
                 <span>
                   Solo tú puedes ver este resultado. ¡Guarda el secreto hasta la entrega de regalos!
@@ -761,14 +764,14 @@ export default function GroupPage() {
               </div>
 
               {/* Bloque de validación individual */}
-              <div className="mt-6 pt-6 border-t border-red-200/60">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/90 p-4 sm:p-5 rounded-2xl border border-red-100 shadow-sm">
+              <div className="mt-6 pt-6 border-t border-red-200/60 dark:border-red-900/40">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/90 dark:bg-slate-800/90 p-4 sm:p-5 rounded-2xl border border-red-100 dark:border-red-950 shadow-sm">
                   <div>
-                    <h4 className="font-extrabold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                    <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
                       <span>🗳️</span>
                       <span>¿Confirmas tu asignación?</span>
                     </h4>
-                    <p className="text-xs sm:text-sm text-slate-500 mt-0.5 max-w-md">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 max-w-md">
                       Una vez que todos los participantes pulsen <strong>"Validar"</strong>, se enviarán automáticamente los correos definitivos a cada uno.
                     </p>
                   </div>
@@ -779,8 +782,8 @@ export default function GroupPage() {
                       disabled={validating}
                       className={`flex-1 sm:flex-initial px-5 py-3 rounded-2xl font-bold text-sm transition transform active:scale-95 flex items-center justify-center gap-2 ${
                         myAssignment.validationStatus === 'approved'
-                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200 ring-2 ring-emerald-600 ring-offset-2'
-                          : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-300'
+                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200 dark:shadow-none ring-2 ring-emerald-600 ring-offset-2 dark:ring-offset-slate-900'
+                          : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border-2 border-emerald-300 dark:border-emerald-800'
                       }`}
                     >
                       <span>👍</span>
@@ -794,8 +797,8 @@ export default function GroupPage() {
                       disabled={validating}
                       className={`flex-1 sm:flex-initial px-5 py-3 rounded-2xl font-bold text-sm transition transform active:scale-95 flex items-center justify-center gap-2 ${
                         myAssignment.validationStatus === 'rejected'
-                          ? 'bg-rose-600 text-white shadow-md shadow-rose-200 ring-2 ring-rose-600 ring-offset-2'
-                          : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border-2 border-rose-300'
+                          ? 'bg-rose-600 text-white shadow-md shadow-rose-200 dark:shadow-none ring-2 ring-rose-600 ring-offset-2 dark:ring-offset-slate-900'
+                          : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 border-2 border-rose-300 dark:border-rose-800'
                       }`}
                     >
                       <span>👎</span>
@@ -809,7 +812,7 @@ export default function GroupPage() {
                 </div>
 
                 {myAssignment.validationStatus === 'approved' && (
-                  <p className="text-xs text-emerald-700 font-semibold mt-2.5 flex items-center gap-1.5">
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold mt-2.5 flex items-center gap-1.5">
                     <span>✓</span>
                     <span>
                       Has validado tu asignación. En cuanto todos los miembros validen, se enviarán los emails oficiales.
@@ -817,7 +820,7 @@ export default function GroupPage() {
                   </p>
                 )}
                 {myAssignment.validationStatus === 'rejected' && (
-                  <p className="text-xs text-rose-700 font-semibold mt-2.5 flex items-center gap-1.5">
+                  <p className="text-xs text-rose-700 dark:text-rose-400 font-semibold mt-2.5 flex items-center gap-1.5">
                     <span>✕</span>
                     <span>
                       Has indicado que no te convence. El creador del grupo puede pulsar "Volver a sortear".
@@ -827,20 +830,20 @@ export default function GroupPage() {
               </div>
             </div>
           ) : (
-            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 sm:p-8 text-center sm:text-left space-y-4">
-              <div className="flex items-center gap-3 text-slate-700 font-semibold text-lg">
+            <div className="bg-slate-50 dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 text-center sm:text-left space-y-4">
+              <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-semibold text-lg">
                 <span>⏳</span>
                 <span>Aún no se ha realizado el sorteo</span>
               </div>
 
               {isCreator ? (
                 <div>
-                  <p className="text-slate-600 text-sm sm:text-base mb-4">
+                  <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base mb-4">
                     Como creador del grupo, cuando todos los amigos o familiares se hayan unido,
                     pulsa el botón para realizar el sorteo automático.
                   </p>
                   {members.length < 2 ? (
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm font-medium">
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-300 text-sm font-medium">
                       ⚠️ Se necesitan al menos <strong>2 personas</strong> en el grupo para realizar el sorteo. Añade participantes con el botón o comparte el código.
                     </div>
                   ) : (
@@ -854,7 +857,7 @@ export default function GroupPage() {
                   )}
                 </div>
               ) : (
-                <p className="text-slate-500 text-sm sm:text-base">
+                <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">
                   El creador del grupo aún no ha iniciado el sorteo. En cuanto lo realice, recibirás un aviso y verás aquí a quién te ha tocado para validar.
                 </p>
               )}
@@ -864,17 +867,17 @@ export default function GroupPage() {
 
         {/* Participantes Gestionados (Personas mayores / niños sin móvil) */}
         {myAssignment?.managedAssignments?.length > 0 && (
-          <div className="bg-gradient-to-tr from-amber-50/80 via-white to-orange-50/60 rounded-3xl border-2 border-amber-300/80 p-6 sm:p-8 shadow-sm mb-8 animate-fade-in">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-amber-200/80 pb-4">
+          <div className="bg-gradient-to-tr from-amber-50/80 via-white to-orange-50/60 dark:from-amber-950/20 dark:via-slate-900 dark:to-orange-950/20 rounded-3xl border-2 border-amber-300/80 dark:border-amber-800/60 p-6 sm:p-8 shadow-sm mb-8 animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-amber-200/80 dark:border-amber-800/60 pb-4">
               <div>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-200 text-amber-900 mb-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 mb-2">
                   <span>👵</span> <span>Tutor / Responsable</span>
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <span>🎁</span>
                   <span>Participantes que gestionas ({myAssignment.managedAssignments.length})</span>
                 </h3>
-                <p className="text-slate-600 text-xs sm:text-sm mt-1">
+                <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1">
                   Personas sin móvil o correo que confían en ti. Puedes ver su asignación en privado, imprimir su papeleta recortable y validar en su nombre.
                 </p>
               </div>
@@ -888,14 +891,14 @@ export default function GroupPage() {
                 return (
                   <div
                     key={ma.userId}
-                    className="bg-white rounded-2xl border-2 border-amber-200 p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6"
+                    className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-amber-200 dark:border-amber-800/60 p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className="text-lg sm:text-xl font-black text-slate-900">
+                        <span className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">
                           {ma.name}
                         </span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
                           Sin móvil · Gestionado por ti
                         </span>
                       </div>
@@ -903,27 +906,27 @@ export default function GroupPage() {
                       {hasAssignment ? (
                         <div className="mt-3">
                           {isRevealed ? (
-                            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 inline-block w-full sm:w-auto">
-                              <span className="text-xs font-bold uppercase tracking-wider text-rose-600 block mb-1">
+                            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 inline-block w-full sm:w-auto">
+                              <span className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 block mb-1">
                                 ✨ Le ha tocado regalarle a ✨
                               </span>
-                              <div className="text-2xl sm:text-3xl font-extrabold text-red-700">
+                              <div className="text-2xl sm:text-3xl font-extrabold text-red-700 dark:text-red-400">
                                 {ma.assignedTo.name}
                               </div>
                             </div>
                           ) : (
-                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 inline-block w-full sm:w-auto">
-                              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 inline-block w-full sm:w-auto">
+                              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block mb-1">
                                 Amigo invisible secreto
                               </span>
-                              <div className="text-xl font-bold text-slate-400 tracking-widest">
+                              <div className="text-xl font-bold text-slate-400 dark:text-slate-500 tracking-widest">
                                 • • • • • • • •
                               </div>
                             </div>
                           )}
                         </div>
                       ) : (
-                        <p className="text-xs text-slate-400 font-medium mt-1">
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-1">
                           Pendiente de que el creador realice el sorteo.
                         </p>
                       )}
@@ -935,7 +938,7 @@ export default function GroupPage() {
                         <button
                           type="button"
                           onClick={() => toggleRevealManaged(ma.userId)}
-                          className="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition flex items-center justify-center gap-1.5"
+                          className="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition flex items-center justify-center gap-1.5"
                         >
                           <span>{isRevealed ? '🙈' : '👁️'}</span>
                           <span>{isRevealed ? 'Ocultar' : 'Ver en secreto'}</span>
@@ -946,7 +949,7 @@ export default function GroupPage() {
                           <button
                             type="button"
                             onClick={() => handlePrintCard(ma.name, ma.assignedTo.name)}
-                            className="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition flex items-center justify-center gap-1.5 shadow-sm"
+                            className="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 transition flex items-center justify-center gap-1.5 shadow-sm"
                           >
                             <span>🖨️</span>
                             <span>Imprimir papeleta</span>
@@ -994,13 +997,13 @@ export default function GroupPage() {
 
         {/* Progreso Global de Validaciones */}
         {group.assigned && group.validationStats && (
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm mb-8">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
               <div>
-                <span className="text-xs uppercase font-extrabold text-slate-400 tracking-wider block mb-1">
+                <span className="text-xs uppercase font-extrabold text-slate-400 dark:text-slate-400 tracking-wider block mb-1">
                   Progreso de Confirmación del Grupo
                 </span>
-                <h3 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <span>📊</span>
                   <span>
                     {group.validationStats.approved} de {group.validationStats.total} participantes han validado
@@ -1009,26 +1012,26 @@ export default function GroupPage() {
               </div>
 
               {group.emails_sent ? (
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                   ✉️ Correos oficiales enviados
                 </span>
               ) : group.validationStats.allApproved ? (
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 animate-pulse">
                   🎉 ¡100% Validado! Enviando correos...
                 </span>
               ) : group.validationStats.rejected > 0 ? (
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
                   ⚠️ {group.validationStats.rejected} participante(s) han pedido repetir
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                   ⏳ Esperando validaciones
                 </span>
               )}
             </div>
 
             {/* Barra de progreso visual */}
-            <div className="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden p-0.5 border border-slate-200">
+            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3.5 overflow-hidden p-0.5 border border-slate-200 dark:border-slate-700">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
                   group.validationStats.rejected > 0
@@ -1046,7 +1049,7 @@ export default function GroupPage() {
             </div>
 
             {group.emails_sent && (
-              <p className="text-xs sm:text-sm text-emerald-700 font-semibold mt-3 flex items-center gap-2">
+              <p className="text-xs sm:text-sm text-emerald-700 dark:text-emerald-400 font-semibold mt-3 flex items-center gap-2">
                 <span>🎁</span>
                 <span>
                   ¡Todo listo! Cada participante ha recibido su correo discreto con su asignación definitiva.
@@ -1057,14 +1060,14 @@ export default function GroupPage() {
         )}
 
         {/* Lista de Miembros */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <span>👥</span>
                 <span>Miembros del grupo ({members.length})</span>
               </h2>
-              <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
+              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-0.5">
                 Personas que participan en este amigo invisible
               </p>
             </div>
@@ -1083,7 +1086,7 @@ export default function GroupPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                   <th className="px-5 py-3.5 rounded-l-xl">Nombre y Apellido</th>
                   <th className="px-5 py-3.5">Correo electrónico</th>
                   <th className="px-5 py-3.5 text-right">Rol</th>
@@ -1095,33 +1098,33 @@ export default function GroupPage() {
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {members.map((m) => {
                   const isCurrent = m.id === currentUid;
                   const isMemberCreator = m.id === group.creator_id;
 
                   return (
-                    <tr key={m.id} className="hover:bg-slate-50/70 transition">
+                    <tr key={m.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 text-white font-bold flex items-center justify-center text-sm shadow-sm shrink-0">
                             {m.name ? m.name.charAt(0).toUpperCase() : 'U'}
                           </div>
                           <div>
-                            <span className="font-bold text-slate-900 text-sm sm:text-base block">
+                            <span className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base block">
                               {m.name || 'Sin nombre'}
                             </span>
                             {isCurrent && (
-                              <span className="text-xs text-red-600 font-semibold">
+                              <span className="text-xs text-red-600 dark:text-red-400 font-semibold">
                                 (Tú)
                               </span>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-sm text-slate-600 font-medium">
+                      <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">
                         {m.isManaged ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                             <span>👵</span>
                             <span>Sin móvil · Tutor: {m.guardianName || 'Familiar'}</span>
                           </span>
@@ -1131,11 +1134,11 @@ export default function GroupPage() {
                       </td>
                       <td className="px-5 py-4 text-right">
                         {isMemberCreator ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                             👑 Creador
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                             Participante
                           </span>
                         )}
@@ -1143,15 +1146,15 @@ export default function GroupPage() {
                       {group.assigned && (
                         <td className="px-5 py-4 text-center">
                           {m.validationStatus === 'approved' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                               ✓ Validado
                             </span>
                           ) : m.validationStatus === 'rejected' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
                               ✕ No conforme
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                               ⏳ Pendiente
                             </span>
                           )}
@@ -1166,7 +1169,7 @@ export default function GroupPage() {
                                   <button
                                     onClick={() => handleResendInvite(m)}
                                     disabled={resendingMemberId === m.id}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-200 hover:border-blue-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-white bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-600 dark:hover:bg-blue-600 border border-blue-200 dark:border-blue-900 hover:border-blue-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
                                   >
                                     <span>✉️</span>
                                     <span>
@@ -1180,7 +1183,7 @@ export default function GroupPage() {
                                 <button
                                   onClick={() => handleRemoveMember(m)}
                                   disabled={deletingMemberId === m.id}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 hover:border-red-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 dark:text-red-400 hover:text-white bg-red-50 dark:bg-red-950/40 hover:bg-red-600 dark:hover:bg-red-600 border border-red-200 dark:border-red-900 hover:border-red-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
                                 >
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -1203,7 +1206,7 @@ export default function GroupPage() {
                               </Tooltip>
                             </div>
                           ) : (
-                            <span className="text-xs text-slate-400 italic">—</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 italic">—</span>
                           )}
                         </td>
                       )}
@@ -1228,15 +1231,15 @@ export default function GroupPage() {
               setAddError('');
             }
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm animate-fade-in"
         >
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl font-bold">
+                <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center text-xl font-bold">
                   👤
                 </div>
-                <h3 id="add-participant-title" className="text-xl sm:text-2xl font-bold text-slate-900">
+                <h3 id="add-participant-title" className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
                   Añadir participante
                 </h3>
               </div>
@@ -1245,7 +1248,7 @@ export default function GroupPage() {
                   setShowAddModal(false);
                   setAddError('');
                 }}
-                className="text-slate-400 hover:text-slate-600 p-2 text-xl leading-none"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 text-xl leading-none"
               >
                 ✕
               </button>
@@ -1256,7 +1259,7 @@ export default function GroupPage() {
                 <div
                   role="alert"
                   aria-live="assertive"
-                  className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2"
+                  className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-sm font-medium flex items-center gap-2"
                 >
                   <span>⚠️</span>
                   <span>{addError}</span>
@@ -1282,7 +1285,7 @@ export default function GroupPage() {
 
               {/* Casilla persona mayor o sin móvil */}
               <div
-                className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-50 border-2 border-amber-300 cursor-pointer select-none"
+                className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-300 dark:border-amber-800 cursor-pointer select-none"
                 onClick={() => setIsManagedPerson(!isManagedPerson)}
               >
                 <input
@@ -1294,10 +1297,10 @@ export default function GroupPage() {
                 />
                 <label
                   htmlFor="modalIsManaged"
-                  className="text-xs sm:text-sm font-semibold text-amber-900 cursor-pointer"
+                  className="text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200 cursor-pointer"
                 >
                   <span className="block font-bold">👵 Esta persona no tiene móvil ni correo (mayor o niño)</span>
-                  <span className="text-xs text-amber-800 font-normal block mt-0.5">
+                  <span className="text-xs text-amber-800 dark:text-amber-300 font-normal block mt-0.5">
                     No necesitará registrarse. Un familiar actuará como tutor responsable para ver su amigo invisible, imprimirle su papeleta y validar en su nombre.
                   </span>
                 </label>
@@ -1318,14 +1321,14 @@ export default function GroupPage() {
                       placeholder="laura@ejemplo.com"
                       className="input-field"
                     />
-                    <p className="text-xs text-slate-500 mt-2">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                       Se enviará a este correo el amigo que le haya tocado tras el sorteo.
                     </p>
                   </div>
 
                   {/* Opción de enviar email de invitación con el enlace y código */}
                   <div
-                    className="flex items-start gap-3 p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200 cursor-pointer select-none"
+                    className="flex items-start gap-3 p-3.5 rounded-2xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 cursor-pointer select-none"
                     onClick={() => setSendInviteEmail(!sendInviteEmail)}
                   >
                     <input
@@ -1337,7 +1340,7 @@ export default function GroupPage() {
                     />
                     <label
                       htmlFor="modalSendInvite"
-                      className="text-xs sm:text-sm font-semibold text-slate-700 cursor-pointer"
+                      className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer"
                     >
                       ✉️ Enviar correo de invitación con el enlace directo y código para unirse al grupo
                     </label>
@@ -1362,7 +1365,7 @@ export default function GroupPage() {
                         </option>
                       ))}
                   </select>
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                     Este familiar podrá ver discretamente a quién le ha tocado, imprimir su papeleta y validar en su nombre.
                   </p>
                 </div>

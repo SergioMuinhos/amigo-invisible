@@ -77,7 +77,7 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
         }
       }}
     >
-      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 transform transition-all">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 dark:border-slate-800 transform transition-all">
         {/* Encabezado decorativo */}
         <div className="bg-gradient-to-r from-red-600 via-rose-600 to-rose-700 p-6 sm:p-8 text-white relative">
           <div className="flex items-center gap-4">
@@ -112,21 +112,21 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
           {error && (
-            <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-xl text-red-700 text-sm font-semibold flex items-center gap-2">
+            <div className="p-4 bg-red-50 dark:bg-red-950/40 border-l-4 border-red-500 rounded-xl text-red-700 dark:text-red-300 text-sm font-semibold flex items-center gap-2">
               <span>⚠️</span>
               <span>{error}</span>
             </div>
           )}
 
           {isFirstTime && (
-            <p className="text-sm text-slate-600 bg-amber-50 border border-amber-200/60 p-3.5 rounded-2xl">
+            <p className="text-sm text-slate-600 dark:text-slate-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/50 p-3.5 rounded-2xl">
               💡 <strong>Consejo:</strong> Pon tu nombre y primer apellido real para que tus familiares o amigos sepan quién eres en el sorteo.
             </p>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="profile-firstName" className="block text-sm font-bold text-slate-700 mb-1.5">
+              <label htmlFor="profile-firstName" className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-1.5">
                 Nombre <span className="text-red-500">*</span>
               </label>
               <input
@@ -137,12 +137,12 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Ej. Sergio"
-                className="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 font-semibold text-slate-800 placeholder-slate-400 outline-none transition"
+                className="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-red-500 focus:ring-4 focus:ring-red-100 dark:focus:ring-red-950 font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none transition"
               />
             </div>
 
             <div>
-              <label htmlFor="profile-lastName" className="block text-sm font-bold text-slate-700 mb-1.5">
+              <label htmlFor="profile-lastName" className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-1.5">
                 Apellidos
               </label>
               <input
@@ -152,14 +152,14 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Ej. García López"
-                className="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 font-semibold text-slate-800 placeholder-slate-400 outline-none transition"
+                className="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-red-500 focus:ring-4 focus:ring-red-100 dark:focus:ring-red-950 font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none transition"
               />
             </div>
           </div>
 
           {/* Vista previa en vivo */}
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">
+          <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block mb-2">
               Vista previa en los grupos
             </span>
             <div className="flex items-center gap-3">
@@ -171,8 +171,8 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
                 )}
               </div>
               <div className="min-w-0">
-                <p className="font-bold text-slate-800 truncate">{previewName}</p>
-                <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{previewName}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
               </div>
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function ProfileModal({ isOpen, onClose, isFirstTime = false }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="w-1/3 py-3.5 px-4 rounded-2xl font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition"
+                className="w-1/3 py-3.5 px-4 rounded-2xl font-bold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 Cancelar
               </button>

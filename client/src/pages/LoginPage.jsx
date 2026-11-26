@@ -9,6 +9,7 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebaseConfig';
 import { api } from '../api';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -144,18 +145,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+      <ThemeToggle className="absolute top-4 right-4 sm:top-6 sm:right-6 shadow-sm z-10" />
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 sm:px-10 shadow-xl rounded-3xl border border-slate-200">
+        <div className="bg-white dark:bg-slate-900 py-8 px-6 sm:px-10 shadow-xl rounded-3xl border border-slate-200 dark:border-slate-800">
           {/* Logo y Encabezado */}
           <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-tr from-red-600 to-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-white shadow-md shadow-red-200 text-2xl font-bold">
+            <div className="w-14 h-14 bg-gradient-to-tr from-red-600 to-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-white shadow-md shadow-red-200 dark:shadow-none text-2xl font-bold">
               🎁
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
               Amigo Invisible
             </h1>
-            <p className="text-slate-600 text-sm sm:text-base mt-1">
+            <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base mt-1">
               {mode === 'login'
                 ? 'Inicia sesión para entrar a tus grupos'
                 : 'Crea tu cuenta con tu nombre y apellido'}
@@ -163,16 +165,16 @@ export default function LoginPage() {
           </div>
 
           {inviteCode && (
-            <div className="mb-6 p-4 rounded-2xl bg-rose-50 border-2 border-rose-200 text-rose-800 text-center animate-fade-in shadow-sm">
+            <div className="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 text-center animate-fade-in shadow-sm">
               <span className="text-2xl block mb-1">🎟️</span>
-              <p className="text-xs font-bold uppercase tracking-wider text-rose-500 mb-0.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-rose-500 dark:text-rose-400 mb-0.5">
                 Invitación a grupo
               </p>
-              <p className="text-sm font-bold text-slate-800">
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                 ¡Has sido invitado con el código{' '}
-                <span className="font-mono text-red-600 font-extrabold">{inviteCode}</span>!
+                <span className="font-mono text-red-600 dark:text-red-400 font-extrabold">{inviteCode}</span>!
               </p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Inicia sesión o regístrate para unirte automáticamente.
               </p>
             </div>
@@ -183,7 +185,7 @@ export default function LoginPage() {
             onClick={handleGoogle}
             disabled={googleLoading || loading}
             aria-label="Acceder con Google"
-            className="w-full flex items-center justify-center gap-3 px-5 py-3.5 border border-slate-300 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm sm:text-base transition duration-150 shadow-sm active:scale-[0.99] disabled:opacity-50 mb-6"
+            className="w-full flex items-center justify-center gap-3 px-5 py-3.5 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold text-sm sm:text-base transition duration-150 shadow-sm active:scale-[0.99] disabled:opacity-50 mb-6"
           >
             {googleLoading ? (
               <span>Conectando con Google...</span>
@@ -214,9 +216,9 @@ export default function LoginPage() {
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-200"></span>
+              <span className="w-full border-t border-slate-200 dark:border-slate-800"></span>
             </div>
-            <span className="relative flex justify-center text-xs uppercase tracking-wider text-slate-400 bg-white px-3 font-semibold">
+            <span className="relative flex justify-center text-xs uppercase tracking-wider text-slate-400 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 font-semibold">
               o con tu correo
             </span>
           </div>
@@ -339,7 +341,7 @@ export default function LoginPage() {
           </form>
 
           {/* Cambio de modo */}
-          <div className="mt-6 text-center text-sm text-slate-600">
+          <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
             {mode === 'login' ? (
               <p>
                 ¿No tienes cuenta?{' '}

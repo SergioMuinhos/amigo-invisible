@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import ProfileModal from '../components/ProfileModal';
 import Tooltip from '../components/Tooltip';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function Dashboard() {
   const { user, token, logout } = useAuth();
@@ -144,18 +145,18 @@ export default function Dashboard() {
   const userDisplayName = user?.displayName || user?.email?.split('@')[0] || 'Amigo';
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
       {/* Navbar Superior */}
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm backdrop-blur-md bg-white/95">
+      <nav className="bg-white/95 dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-sm backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 sm:h-20 items-center">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-tr from-red-600 to-rose-500 rounded-xl flex items-center justify-center text-white shadow-md shadow-red-200 text-xl font-bold">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-tr from-red-600 to-rose-500 rounded-xl flex items-center justify-center text-white shadow-md shadow-red-200 dark:shadow-none text-xl font-bold">
                 🎁
               </div>
               <div>
-                <span className="font-extrabold text-xl sm:text-2xl text-slate-900 tracking-tight block">
+                <span className="font-extrabold text-xl sm:text-2xl text-slate-900 dark:text-slate-100 tracking-tight block">
                   Amigo Invisible
                 </span>
               </div>
@@ -163,10 +164,12 @@ export default function Dashboard() {
 
             {/* Perfil & Acciones de usuario */}
             <div className="flex items-center gap-2 sm:gap-4">
+              <ThemeToggle />
+
               <Tooltip text="Editar mi nombre y apellidos">
                 <button
                   onClick={() => setShowProfileModal(true)}
-                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition text-left group"
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition text-left group"
                 >
                   <div className="w-8 h-8 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-sm shadow-sm overflow-hidden shrink-0 group-hover:scale-105 transition transform">
                     {user?.picture ? (
@@ -176,10 +179,10 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="hidden xs:block">
-                    <span className="text-sm font-bold text-slate-800 max-w-[120px] sm:max-w-[180px] truncate block leading-tight group-hover:text-red-600 transition">
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200 max-w-[120px] sm:max-w-[180px] truncate block leading-tight group-hover:text-red-600 dark:group-hover:text-red-400 transition">
                       {userDisplayName}
                     </span>
-                    <span className="text-[11px] text-slate-400 block leading-none mt-0.5">
+                    <span className="text-[11px] text-slate-400 dark:text-slate-400 block leading-none mt-0.5">
                       Editar perfil ✏️
                     </span>
                   </div>
@@ -190,7 +193,7 @@ export default function Dashboard() {
                 <button
                   onClick={logout}
                   aria-label="Cerrar sesión"
-                  className="p-2 sm:px-3 sm:py-2 text-sm font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition duration-150 border border-slate-200 hover:border-red-200 flex items-center gap-1.5"
+                  className="p-2 sm:px-3 sm:py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition duration-150 border border-slate-200 dark:border-slate-700 hover:border-red-200 dark:hover:border-red-800 flex items-center gap-1.5"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -312,10 +315,10 @@ export default function Dashboard() {
         {/* Sección de Grupos */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Tus Grupos
             </h2>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
               {groups.length} {groups.length === 1 ? 'grupo' : 'grupos'}
             </span>
           </div>
@@ -327,27 +330,27 @@ export default function Dashboard() {
             {[1, 2, 3].map((n) => (
               <div
                 key={n}
-                className="bg-white rounded-2xl border border-slate-200 p-6 animate-pulse space-y-4"
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 animate-pulse space-y-4"
               >
                 <div className="flex justify-between items-center">
-                  <div className="h-6 bg-slate-200 rounded w-1/2"></div>
-                  <div className="h-6 bg-slate-200 rounded-full w-20"></div>
+                  <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
+                  <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded-full w-20"></div>
                 </div>
-                <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-                <div className="h-10 bg-slate-100 rounded-xl"></div>
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+                <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
               </div>
             ))}
           </div>
         ) : groups.length === 0 ? (
           /* Estado Vacío */
-          <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-8 sm:p-14 text-center max-w-2xl mx-auto shadow-sm">
-            <div className="w-20 h-20 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-5 shadow-inner">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 p-8 sm:p-14 text-center max-w-2xl mx-auto shadow-sm">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-5 shadow-inner">
               🎁
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
               Aún no tienes ningún grupo
             </h3>
-            <p className="text-slate-600 text-base sm:text-lg mb-8 max-w-md mx-auto">
+            <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg mb-8 max-w-md mx-auto">
               Crea tu propio grupo para organizar el sorteo entre amigos o familia, o únete al grupo de otra persona con su código.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
@@ -376,7 +379,7 @@ export default function Dashboard() {
                 <div
                   key={g.id}
                   onClick={() => navigate(`/grupo/${g.id}`)}
-                  className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-md hover:border-red-300 transition-all duration-200 flex flex-col justify-between cursor-pointer group relative overflow-hidden"
+                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 hover:shadow-md hover:border-red-300 dark:hover:border-red-700 transition-all duration-200 flex flex-col justify-between cursor-pointer group relative overflow-hidden"
                 >
                   {/* Barra de color superior sutil */}
                   <div
@@ -388,21 +391,21 @@ export default function Dashboard() {
                   <div>
                     {/* Header de la tarjeta */}
                     <div className="flex items-start justify-between gap-3 mb-3">
-                      <h3 className="text-xl font-bold text-slate-900 group-hover:text-red-600 transition truncate flex-1">
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition truncate flex-1">
                         {g.name}
                       </h3>
 
                       <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                         {Boolean(g.rejected_count) && g.rejected_count > 0 && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 animate-pulse">
                             ⚠️ Repetición ({g.rejected_count})
                           </span>
                         )}
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shrink-0 ${
                             isAssigned
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                              : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
                           }`}
                         >
                           <span
@@ -416,7 +419,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Metadatos */}
-                    <div className="text-sm text-slate-500 space-y-1.5 mb-5">
+                    <div className="text-sm text-slate-500 dark:text-slate-400 space-y-1.5 mb-5">
                       <p className="flex items-center gap-2">
                         <span>👥</span>
                         <span>
@@ -426,7 +429,7 @@ export default function Dashboard() {
                         </span>
                       </p>
                       {g.creator_name && (
-                        <p className="flex items-center gap-2 text-xs text-slate-400">
+                        <p className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
                           <span>👑</span>
                           <span>Creado por {g.creator_name}</span>
                         </p>
@@ -435,12 +438,12 @@ export default function Dashboard() {
                   </div>
 
                   {/* Caja de Código de Invitación */}
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
                         Código:
                       </span>
-                      <span className="font-mono font-bold text-sm bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 tracking-wider">
+                      <span className="font-mono font-bold text-sm bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 tracking-wider">
                         {g.code}
                       </span>
                     </div>
@@ -451,12 +454,12 @@ export default function Dashboard() {
                           type="button"
                           onClick={(e) => handleCopyCode(e, g.code)}
                           aria-label="Copiar código de invitación"
-                          className="p-2 text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-slate-100 rounded-lg transition border border-transparent hover:border-slate-200 flex items-center gap-1"
+                          className="p-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition border border-transparent hover:border-slate-200 dark:hover:border-slate-700 flex items-center gap-1"
                         >
                           {isCopied ? (
                             <>
-                              <span className="text-emerald-600">✓</span>
-                              <span className="text-emerald-600 text-xs font-bold">Copiado</span>
+                              <span className="text-emerald-600 dark:text-emerald-400">✓</span>
+                              <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold">Copiado</span>
                             </>
                           ) : (
                             <>
@@ -489,7 +492,7 @@ export default function Dashboard() {
                               handleDeleteGroup(g);
                             }}
                             aria-label="Eliminar grupo"
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                            className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -512,7 +515,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Botón sutil de entrar */}
-                  <div className="mt-4 pt-3 flex items-center justify-end text-red-600 font-bold text-sm group-hover:translate-x-1 transition-transform">
+                  <div className="mt-4 pt-3 flex items-center justify-end text-red-600 dark:text-red-400 font-bold text-sm group-hover:translate-x-1 transition-transform">
                     <span>Ver grupo</span>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -538,14 +541,14 @@ export default function Dashboard() {
 
       {/* Modal: Crear Grupo */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl font-bold">
+                <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center text-xl font-bold">
                   🎁
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
                   Crear nuevo grupo
                 </h3>
               </div>
@@ -555,7 +558,7 @@ export default function Dashboard() {
                   setNewName('');
                   setCreateError('');
                 }}
-                className="text-slate-400 hover:text-slate-600 p-2 text-xl leading-none"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 text-xl leading-none"
               >
                 ✕
               </button>
@@ -563,7 +566,7 @@ export default function Dashboard() {
 
             <form onSubmit={handleCreate} className="space-y-5">
               {createError && (
-                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
+                <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-sm font-medium flex items-center gap-2">
                   <span>⚠️</span>
                   <span>{createError}</span>
                 </div>
@@ -582,7 +585,7 @@ export default function Dashboard() {
                   placeholder="Ej: Familia González, Colegas del trabajo..."
                   className="input-field"
                 />
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                   Se generará un código único para que tus amigos puedan unirse.
                 </p>
               </div>
@@ -614,14 +617,14 @@ export default function Dashboard() {
 
       {/* Modal: Unirse a Grupo */}
       {showJoinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl font-bold">
+                <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center text-xl font-bold">
                   🔑
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
                   Unirse a un grupo
                 </h3>
               </div>
@@ -631,7 +634,7 @@ export default function Dashboard() {
                   setJoinCode('');
                   setJoinError('');
                 }}
-                className="text-slate-400 hover:text-slate-600 p-2 text-xl leading-none"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 text-xl leading-none"
               >
                 ✕
               </button>
@@ -639,7 +642,7 @@ export default function Dashboard() {
 
             <form onSubmit={handleJoin} className="space-y-5">
               {joinError && (
-                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
+                <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-sm font-medium flex items-center gap-2">
                   <span>⚠️</span>
                   <span>{joinError}</span>
                 </div>
@@ -659,7 +662,7 @@ export default function Dashboard() {
                   placeholder="Ej: ABC123"
                   className="input-field text-center font-mono font-bold tracking-widest uppercase text-xl"
                 />
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                   Introduce el código de 6 caracteres facilitado por el creador del grupo.
                 </p>
               </div>
