@@ -1,27 +1,21 @@
 services:
   amigo-invisible:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - VITE_FIREBASE_API_KEY=${VITE_FIREBASE_API_KEY:-}
-        - VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN:-}
-        - VITE_FIREBASE_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID:-}
-        - VITE_FIREBASE_STORAGE_BUCKET=${VITE_FIREBASE_STORAGE_BUCKET:-}
-        - VITE_FIREBASE_MESSAGING_SENDER_ID=${VITE_FIREBASE_MESSAGING_SENDER_ID:-}
-        - VITE_FIREBASE_APP_ID=${VITE_FIREBASE_APP_ID:-}
-        - VITE_API_BASE=${VITE_API_BASE:-/api}
-    pull_policy: build
-    image: amigo-invisible:latest
+    image: ghcr.io/sergiomuinhos/amigo-invisible:latest
     container_name: amigo-invisible
     restart: unless-stopped
-    labels:
-      - "com.centurylinklabs.watchtower.enable=false"
     ports:
       - "${PORT:-3000}:3000"
     environment:
       - PORT=3000
       - DB_PATH=/data/database.sqlite
+      # Configuración Firebase Frontend (inyectada en /env.js)
+      - VITE_FIREBASE_API_KEY=${VITE_FIREBASE_API_KEY:-}
+      - VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN:-}
+      - VITE_FIREBASE_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID:-}
+      - VITE_FIREBASE_STORAGE_BUCKET=${VITE_FIREBASE_STORAGE_BUCKET:-}
+      - VITE_FIREBASE_MESSAGING_SENDER_ID=${VITE_FIREBASE_MESSAGING_SENDER_ID:-}
+      - VITE_FIREBASE_APP_ID=${VITE_FIREBASE_APP_ID:-}
+      - VITE_API_BASE=${VITE_API_BASE:-/api}
       # Firebase Admin SDK (Backend)
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-}
       - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL:-}

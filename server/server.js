@@ -23,6 +23,21 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
 
+// Servir variables de entorno públicas para el frontend en tiempo de ejecución
+app.get('/env.js', (req, res) => {
+  res.type('application/javascript');
+  const publicEnv = {
+    VITE_FIREBASE_API_KEY: process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || '',
+    VITE_FIREBASE_AUTH_DOMAIN: process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN || '',
+    VITE_FIREBASE_PROJECT_ID: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || '',
+    VITE_FIREBASE_STORAGE_BUCKET: process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET || '',
+    VITE_FIREBASE_MESSAGING_SENDER_ID: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID || '',
+    VITE_FIREBASE_APP_ID: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID || '',
+    VITE_API_BASE: process.env.VITE_API_BASE || '/api',
+  };
+  res.send(`window.__ENV__ = ${JSON.stringify(publicEnv)};`);
+});
+
 // Servir frontend en producción (build de Vite copiado a client/dist)
 app.use(express.static(path.join(__dirname, '../client/dist')));
 

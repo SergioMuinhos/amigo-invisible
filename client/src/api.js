@@ -1,4 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+const env = (typeof window !== 'undefined' && window.__ENV__) || {};
+const API_BASE = env.VITE_API_BASE || import.meta.env.VITE_API_BASE || '/api';
 
 async function request(path, options = {}, token) {
   const headers = {
