@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import ProfileModal from '../components/ProfileModal';
+import Tooltip from '../components/Tooltip';
 
 export default function Dashboard() {
   const { user, token, logout } = useAuth();
@@ -162,50 +163,52 @@ export default function Dashboard() {
 
             {/* Perfil & Acciones de usuario */}
             <div className="flex items-center gap-2 sm:gap-4">
-              <button
-                onClick={() => setShowProfileModal(true)}
-                title="Editar mi nombre y apellidos"
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition text-left group"
-              >
-                <div className="w-8 h-8 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-sm shadow-sm overflow-hidden shrink-0 group-hover:scale-105 transition transform">
-                  {user?.picture ? (
-                    <img src={user.picture} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    userInitial
-                  )}
-                </div>
-                <div className="hidden xs:block">
-                  <span className="text-sm font-bold text-slate-800 max-w-[120px] sm:max-w-[180px] truncate block leading-tight group-hover:text-red-600 transition">
-                    {userDisplayName}
-                  </span>
-                  <span className="text-[11px] text-slate-400 block leading-none mt-0.5">
-                    Editar perfil ✏️
-                  </span>
-                </div>
-              </button>
-
-              <button
-                onClick={logout}
-                title="Cerrar sesión"
-                aria-label="Cerrar sesión"
-                className="p-2 sm:px-3 sm:py-2 text-sm font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition duration-150 border border-slate-200 hover:border-red-200 flex items-center gap-1.5"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+              <Tooltip text="Editar mi nombre y apellidos">
+                <button
+                  onClick={() => setShowProfileModal(true)}
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition text-left group"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  />
-                </svg>
-                <span className="hidden sm:inline">Salir</span>
-              </button>
+                  <div className="w-8 h-8 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-sm shadow-sm overflow-hidden shrink-0 group-hover:scale-105 transition transform">
+                    {user?.picture ? (
+                      <img src={user.picture} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      userInitial
+                    )}
+                  </div>
+                  <div className="hidden xs:block">
+                    <span className="text-sm font-bold text-slate-800 max-w-[120px] sm:max-w-[180px] truncate block leading-tight group-hover:text-red-600 transition">
+                      {userDisplayName}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block leading-none mt-0.5">
+                      Editar perfil ✏️
+                    </span>
+                  </div>
+                </button>
+              </Tooltip>
+
+              <Tooltip text="Cerrar sesión">
+                <button
+                  onClick={logout}
+                  aria-label="Cerrar sesión"
+                  className="p-2 sm:px-3 sm:py-2 text-sm font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition duration-150 border border-slate-200 hover:border-red-200 flex items-center gap-1.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Salir</span>
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -443,20 +446,51 @@ export default function Dashboard() {
                     </div>
 
                     <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={(e) => handleCopyCode(e, g.code)}
-                        title="Copiar código de invitación"
-                        aria-label="Copiar código de invitación"
-                        className="p-2 text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-slate-100 rounded-lg transition border border-transparent hover:border-slate-200 flex items-center gap-1"
-                      >
-                        {isCopied ? (
-                          <>
-                            <span className="text-emerald-600">✓</span>
-                            <span className="text-emerald-600 text-xs font-bold">Copiado</span>
-                          </>
-                        ) : (
-                          <>
+                      <Tooltip text="Copiar código de invitación">
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyCode(e, g.code)}
+                          aria-label="Copiar código de invitación"
+                          className="p-2 text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-slate-100 rounded-lg transition border border-transparent hover:border-slate-200 flex items-center gap-1"
+                        >
+                          {isCopied ? (
+                            <>
+                              <span className="text-emerald-600">✓</span>
+                              <span className="text-emerald-600 text-xs font-bold">Copiado</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                />
+                              </svg>
+                              <span>Copiar</span>
+                            </>
+                          )}
+                        </button>
+                      </Tooltip>
+
+                      {g.creator_id === (user?.id || user?.uid) && (
+                        <Tooltip text="Eliminar grupo">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteGroup(g);
+                            }}
+                            aria-label="Eliminar grupo"
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                          >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               className="w-4 h-4"
@@ -468,40 +502,11 @@ export default function Dashboard() {
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                               />
                             </svg>
-                            <span>Copiar</span>
-                          </>
-                        )}
-                      </button>
-
-                      {g.creator_id === (user?.id || user?.uid) && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteGroup(g);
-                          }}
-                          title="Eliminar grupo"
-                          aria-label="Eliminar grupo"
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
+                          </button>
+                        </Tooltip>
                       )}
                     </div>
                   </div>

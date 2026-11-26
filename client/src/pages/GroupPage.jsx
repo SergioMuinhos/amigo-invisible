@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import ProfileModal from '../components/ProfileModal';
+import Tooltip from '../components/Tooltip';
 
 export default function GroupPage() {
   const { id } = useParams();
@@ -452,27 +453,28 @@ export default function GroupPage() {
             </button>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={() => setShowProfileModal(true)}
-                title="Editar mi nombre y apellidos"
-                className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition text-left group"
-              >
-                <div className="w-8 h-8 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden shrink-0 group-hover:scale-105 transition transform">
-                  {user?.picture ? (
-                    <img src={user.picture} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()
-                  )}
-                </div>
-                <div className="hidden xs:block">
-                  <span className="text-xs sm:text-sm font-bold text-slate-800 max-w-[120px] sm:max-w-[160px] truncate block leading-tight group-hover:text-red-600 transition">
-                    {user?.name || user?.email?.split('@')[0]}
-                  </span>
-                  <span className="text-[10px] text-slate-400 block leading-none mt-0.5">
-                    Editar perfil ✏️
-                  </span>
-                </div>
-              </button>
+              <Tooltip text="Editar mi nombre y apellidos">
+                <button
+                  onClick={() => setShowProfileModal(true)}
+                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition text-left group"
+                >
+                  <div className="w-8 h-8 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden shrink-0 group-hover:scale-105 transition transform">
+                    {user?.picture ? (
+                      <img src={user.picture} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()
+                    )}
+                  </div>
+                  <div className="hidden xs:block">
+                    <span className="text-xs sm:text-sm font-bold text-slate-800 max-w-[120px] sm:max-w-[160px] truncate block leading-tight group-hover:text-red-600 transition">
+                      {user?.name || user?.email?.split('@')[0]}
+                    </span>
+                    <span className="text-[10px] text-slate-400 block leading-none mt-0.5">
+                      Editar perfil ✏️
+                    </span>
+                  </div>
+                </button>
+              </Tooltip>
 
               <button
                 onClick={logout}
@@ -527,29 +529,31 @@ export default function GroupPage() {
                       {group.name}
                     </h1>
                     {isCreator && (
-                      <button
-                        onClick={() => {
-                          setEditedName(group.name);
-                          setIsEditingName(true);
-                        }}
-                        title="Cambiar nombre del grupo"
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl border border-transparent hover:border-red-200 transition"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
+                      <Tooltip text="Cambiar nombre del grupo">
+                        <button
+                          onClick={() => {
+                            setEditedName(group.name);
+                            setIsEditingName(true);
+                          }}
+                          aria-label="Cambiar nombre del grupo"
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl border border-transparent hover:border-red-200 transition"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                          />
-                        </svg>
-                      </button>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                          </svg>
+                        </button>
+                      </Tooltip>
                     )}
                   </div>
                 )}
@@ -621,36 +625,39 @@ export default function GroupPage() {
                   </button>
                 ) : (
                   <>
-                    <button
-                      onClick={handleAssign}
-                      disabled={assigning}
-                      className="px-4 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white shadow-md shadow-red-200 transition transform active:scale-95 disabled:opacity-50"
-                      title="Genera una nueva combinación aleatoria"
-                    >
-                      {assigning ? 'Sorteando...' : '🎲 Volver a sortear'}
-                    </button>
+                    <Tooltip text="Genera una nueva combinación aleatoria">
+                      <button
+                        onClick={handleAssign}
+                        disabled={assigning}
+                        className="px-4 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white shadow-md shadow-red-200 transition transform active:scale-95 disabled:opacity-50"
+                      >
+                        {assigning ? 'Sorteando...' : '🎲 Volver a sortear'}
+                      </button>
+                    </Tooltip>
 
-                    <button
-                      onClick={handleReset}
-                      disabled={resetting}
-                      className="px-4 py-2.5 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
-                      title="Reinicia el sorteo al estado inicial"
-                    >
-                      <span>🔄</span>
-                      <span>{resetting ? 'Reiniciando...' : 'Reiniciar sorteo'}</span>
-                    </button>
+                    <Tooltip text="Reinicia el sorteo al estado inicial">
+                      <button
+                        onClick={handleReset}
+                        disabled={resetting}
+                        className="px-4 py-2.5 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        <span>🔄</span>
+                        <span>{resetting ? 'Reiniciando...' : 'Reiniciar sorteo'}</span>
+                      </button>
+                    </Tooltip>
                   </>
                 )}
 
-                <button
-                  onClick={handleDeleteGroup}
-                  disabled={deletingGroup}
-                  className="px-3.5 py-2.5 rounded-xl font-bold text-sm bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
-                  title="Eliminar este grupo definitivamente"
-                >
-                  <span>🗑️</span>
-                  <span>{deletingGroup ? 'Eliminando...' : 'Eliminar grupo'}</span>
-                </button>
+                <Tooltip text="Eliminar este grupo definitivamente">
+                  <button
+                    onClick={handleDeleteGroup}
+                    disabled={deletingGroup}
+                    className="px-3.5 py-2.5 rounded-xl font-bold text-sm bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    <span>🗑️</span>
+                    <span>{deletingGroup ? 'Eliminando...' : 'Eliminar grupo'}</span>
+                  </button>
+                </Tooltip>
               </div>
             )}
           </div>
@@ -935,15 +942,16 @@ export default function GroupPage() {
                         </button>
 
                         {/* Botón Imprimir Papeleta */}
-                        <button
-                          type="button"
-                          onClick={() => handlePrintCard(ma.name, ma.assignedTo.name)}
-                          className="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition flex items-center justify-center gap-1.5 shadow-sm"
-                          title="Imprimir papeleta recortable para entregarle en mano"
-                        >
-                          <span>🖨️</span>
-                          <span>Imprimir papeleta</span>
-                        </button>
+                        <Tooltip text="Imprimir papeleta recortable para entregarle en mano">
+                          <button
+                            type="button"
+                            onClick={() => handlePrintCard(ma.name, ma.assignedTo.name)}
+                            className="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition flex items-center justify-center gap-1.5 shadow-sm"
+                          >
+                            <span>🖨️</span>
+                            <span>Imprimir papeleta</span>
+                          </button>
+                        </Tooltip>
 
                         {/* Botones de Validación */}
                         <div className="flex items-center gap-2">
@@ -1154,43 +1162,45 @@ export default function GroupPage() {
                           {!isMemberCreator ? (
                             <div className="flex items-center justify-center gap-2">
                               {!m.isManaged && (
-                                <button
-                                  onClick={() => handleResendInvite(m)}
-                                  disabled={resendingMemberId === m.id}
-                                  title={`Enviar / Reenviar correo de invitación a ${m.email}`}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-200 hover:border-blue-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
-                                >
-                                  <span>✉️</span>
-                                  <span>
-                                    {resendingMemberId === m.id ? 'Enviando...' : 'Invitar'}
-                                  </span>
-                                </button>
+                                <Tooltip text={`Enviar / Reenviar correo de invitación a ${m.email}`}>
+                                  <button
+                                    onClick={() => handleResendInvite(m)}
+                                    disabled={resendingMemberId === m.id}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-200 hover:border-blue-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
+                                  >
+                                    <span>✉️</span>
+                                    <span>
+                                      {resendingMemberId === m.id ? 'Enviando...' : 'Invitar'}
+                                    </span>
+                                  </button>
+                                </Tooltip>
                               )}
 
-                              <button
-                                onClick={() => handleRemoveMember(m)}
-                                disabled={deletingMemberId === m.id}
-                                title={`Eliminar a ${m.name} del grupo`}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 hover:border-red-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="w-3.5 h-3.5"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                  strokeWidth={2}
+                              <Tooltip text={`Eliminar a ${m.name} del grupo`}>
+                                <button
+                                  onClick={() => handleRemoveMember(m)}
+                                  disabled={deletingMemberId === m.id}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 hover:border-red-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                  />
-                                </svg>
-                                <span>
-                                  {deletingMemberId === m.id ? 'Eliminando...' : 'Eliminar'}
-                                </span>
-                              </button>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="w-3.5 h-3.5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                  <span>
+                                    {deletingMemberId === m.id ? 'Eliminando...' : 'Eliminar'}
+                                  </span>
+                                </button>
+                              </Tooltip>
                             </div>
                           ) : (
                             <span className="text-xs text-slate-400 italic">—</span>

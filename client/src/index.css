@@ -106,3 +106,68 @@ input, select, textarea {
 .label-field {
   @apply block text-sm sm:text-base font-semibold text-gray-700 mb-2;
 }
+
+/* ========================================================
+   MODERN TOOLTIPS: Popover API & CSS Anchor Positioning
+   Guides: ui-atoms/position-aware-tooltips, ui-behaviors/interest-triggered-tooltips
+   ======================================================== */
+
+.modern-tooltip {
+  /* Anular centrado por defecto de Popover del navegador */
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  overflow: visible;
+  pointer-events: none;
+  color: inherit;
+  z-index: 100;
+}
+
+/* CSS Anchor Positioning en navegadores que lo soportan */
+@supports (position-area: block-start) or (anchor-name: --a) {
+  .modern-tooltip {
+    inset: auto;
+    position: fixed;
+    position-area: block-start;
+    position-try-fallbacks: flip-block;
+    margin-block-end: 6px;
+    margin-block-start: 6px;
+  }
+}
+
+/* Fallback para navegadores sin CSS Anchor Positioning */
+@supports not ((position-area: block-start) or (anchor-name: --a)) {
+  .modern-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* Chip visual del tooltip */
+.modern-tooltip-content {
+  display: inline-block;
+  background: #0f172a; /* Slate 900 */
+  color: #f8fafc; /* Slate 50 */
+  font-size: 0.75rem; /* 12px */
+  font-weight: 600;
+  line-height: 1.25;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+  white-space: nowrap;
+  animation: tooltipFadeIn 0.15s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
