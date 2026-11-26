@@ -46,10 +46,12 @@ db.exec(`
     group_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
     assigned_to TEXT,
+    managed_by TEXT,
     joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (assigned_to) REFERENCES users(id),
+    FOREIGN KEY (managed_by) REFERENCES users(id),
     UNIQUE(group_id, user_id)
   );
 `);
@@ -72,6 +74,9 @@ try {
 } catch (e) {}
 try {
   db.exec('ALTER TABLE users ADD COLUMN is_registered INTEGER DEFAULT 0');
+} catch (e) {}
+try {
+  db.exec('ALTER TABLE members ADD COLUMN managed_by TEXT');
 } catch (e) {}
 try {
   db.exec(`

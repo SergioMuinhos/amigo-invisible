@@ -45,10 +45,10 @@ export const api = {
     request(`/groups/${id}`, { method: 'PUT', body: JSON.stringify({ name }) }, token),
   deleteGroup: (token, id) =>
     request(`/groups/${id}`, { method: 'DELETE' }, token),
-  addMember: (token, id, { name, email, sendEmail = true }) =>
+  addMember: (token, id, { name, email, sendEmail = true, isManaged = false, guardianId = null }) =>
     request(
       `/groups/${id}/members`,
-      { method: 'POST', body: JSON.stringify({ name, email, sendEmail }) },
+      { method: 'POST', body: JSON.stringify({ name, email, sendEmail, isManaged, guardianId }) },
       token
     ),
   resendInvite: (token, id, userId) =>
@@ -59,8 +59,12 @@ export const api = {
     request(`/groups/${id}/assign`, { method: 'POST' }, token),
   resetGroup: (token, id) =>
     request(`/groups/${id}/reset`, { method: 'POST' }, token),
-  validateAssignment: (token, id, action) =>
-    request(`/groups/${id}/validate`, { method: 'POST', body: JSON.stringify({ action }) }, token),
+  validateAssignment: (token, id, action, targetUserId = null) =>
+    request(
+      `/groups/${id}/validate`,
+      { method: 'POST', body: JSON.stringify({ action, targetUserId }) },
+      token
+    ),
   getMyAssignment: (token, id) =>
     request(`/groups/${id}/my-assignment`, {}, token),
 };

@@ -32,6 +32,12 @@ export default function GroupPage() {
   const [resendingMemberId, setResendingMemberId] = useState(null);
   const [deletingGroup, setDeletingGroup] = useState(false);
 
+  // Participantes gestionados (personas mayores / niños sin móvil)
+  const [isManagedPerson, setIsManagedPerson] = useState(false);
+  const [selectedGuardianId, setSelectedGuardianId] = useState('');
+  const [revealedManagedIds, setRevealedManagedIds] = useState({});
+  const [validatingManagedId, setValidatingManagedId] = useState(null);
+
   // Notificaciones
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -159,8 +165,12 @@ export default function GroupPage() {
 
   const handleAddMember = async (e) => {
     e.preventDefault();
-    if (!addName.trim() || !addEmail.trim()) {
-      setAddError('Por favor, indica el nombre completo y el correo.');
+    if (!addName.trim()) {
+      setAddError('Por favor, indica el nombre completo.');
+      return;
+    }
+    if (!isManagedPerson && !addEmail.trim()) {
+      setAddError('Por favor, indica el correo electrónico.');
       return;
     }
     setAddError('');
@@ -168,11 +178,14 @@ export default function GroupPage() {
     try {
       const res = await api.addMember(token, id, {
         name: addName.trim(),
-        email: addEmail.trim(),
-        sendEmail: sendInviteEmail,
+        email: isManagedPerson ? '' : addEmail.trim(),
+        sendEmail: sendInviteEmail && !isManagedPerson,
+        isManaged: isManagedPerson,
+        guardianId: selectedGuardianId || (user?.id || user?.uid),
       });
       setAddName('');
       setAddEmail('');
+      setIsManagedPerson(false);
       setShowAddModal(false);
       setSuccess(res.message || `¡${addName.trim()} ha sido añadido al grupo!`);
       await loadGroup();
@@ -184,6 +197,148 @@ export default function GroupPage() {
     } finally {
       setAddingMember(false);
     }
+  };
+
+  const handleValidateManaged = async (targetUserId, action) => {
+    setError('');
+    setSuccess('');
+    setValidatingManagedId(targetUserId);
+    try {
+      const res = await api.validateAssignment(token, id, action, targetUserId);
+      setSuccess(res.message || 'Validación registrada correctamente.');
+      await loadGroup();
+      await loadMyAssignment();
+    } catch (err) {
+      setError(err.message || 'No se pudo registrar la validación');
+    } finally {
+      setValidatingManagedId(null);
+    }
+  };
+
+  const toggleRevealManaged = (targetUserId) => {
+    setRevealedManagedIds((prev) => ({
+      ...prev,
+      [targetUserId]: !prev[targetUserId],
+    }));
+  };
+
+  const handlePrintCard = (personName, targetName) => {
+    const printWindow = window.open('', '_blank', 'width=650,height=600');
+    if (!printWindow) {
+      alert('Por favor, permite las ventanas emergentes en tu navegador para imprimir la papeleta.');
+      return;
+    }
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Amigo Invisible - ${personName}</title>
+        <style>
+          body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 40px;
+            color: #1e293b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            background: #fff;
+          }
+          .ticket {
+            border: 3px dashed #e11d48;
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+          }
+          .badge {
+            display: inline-block;
+            background: #ffe4e6;
+            color: #e11d48;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 6px 16px;
+            border-radius: 999px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+          }
+          h1 {
+            font-size: 26px;
+            margin: 0 0 10px;
+            color: #0f172a;
+          }
+          .for-person {
+            font-size: 18px;
+            color: #475569;
+            margin-bottom: 25px;
+          }
+          .recipient-box {
+            background: #fff1f2;
+            border: 2px solid #fecdd3;
+            border-radius: 16px;
+            padding: 24px 16px;
+            margin: 20px 0;
+          }
+          .recipient-label {
+            font-size: 12px;
+            font-weight: 800;
+            color: #e11d48;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+          }
+          .recipient-name {
+            font-size: 32px;
+            font-weight: 900;
+            color: #9f1239;
+            margin: 0;
+          }
+          .fold-note {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 25px;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 15px;
+            font-style: italic;
+          }
+          @media print {
+            body { padding: 0; }
+            .ticket { border-width: 2px; box-shadow: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="ticket">
+          <div class="badge">🎁 Amigo Invisible · ${group?.name || 'Sorteo'}</div>
+          <h1>Papeleta Secreta</h1>
+          <div class="for-person">Para: <strong>${personName}</strong></div>
+          
+          <div class="recipient-box">
+            <div class="recipient-label">✨ Te ha tocado regalarle a ✨</div>
+            <div class="recipient-name">${targetName}</div>
+          </div>
+
+          <div class="fold-note">
+            ✂️ Recortar y doblar por la mitad para guardar el secreto
+          </div>
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const handleResendInvite = async (member) => {
@@ -679,6 +834,135 @@ export default function GroupPage() {
           )}
         </div>
 
+        {/* Participantes Gestionados (Personas mayores / niños sin móvil) */}
+        {myAssignment?.managedAssignments?.length > 0 && (
+          <div className="bg-gradient-to-tr from-amber-50/80 via-white to-orange-50/60 rounded-3xl border-2 border-amber-300/80 p-6 sm:p-8 shadow-sm mb-8 animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-amber-200/80 pb-4">
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-200 text-amber-900 mb-2">
+                  <span>👵</span> <span>Tutor / Responsable</span>
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
+                  <span>🎁</span>
+                  <span>Participantes que gestionas ({myAssignment.managedAssignments.length})</span>
+                </h3>
+                <p className="text-slate-600 text-xs sm:text-sm mt-1">
+                  Personas sin móvil o correo que confían en ti. Puedes ver su asignación en privado, imprimir su papeleta recortable y validar en su nombre.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {myAssignment.managedAssignments.map((ma) => {
+                const isRevealed = Boolean(revealedManagedIds[ma.userId]);
+                const hasAssignment = Boolean(ma.assignedTo?.name);
+
+                return (
+                  <div
+                    key={ma.userId}
+                    className="bg-white rounded-2xl border-2 border-amber-200 p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span className="text-lg sm:text-xl font-black text-slate-900">
+                          {ma.name}
+                        </span>
+                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                          Sin móvil · Gestionado por ti
+                        </span>
+                      </div>
+
+                      {hasAssignment ? (
+                        <div className="mt-3">
+                          {isRevealed ? (
+                            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 inline-block w-full sm:w-auto">
+                              <span className="text-xs font-bold uppercase tracking-wider text-rose-600 block mb-1">
+                                ✨ Le ha tocado regalarle a ✨
+                              </span>
+                              <div className="text-2xl sm:text-3xl font-extrabold text-red-700">
+                                {ma.assignedTo.name}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 inline-block w-full sm:w-auto">
+                              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                                Amigo invisible secreto
+                              </span>
+                              <div className="text-xl font-bold text-slate-400 tracking-widest">
+                                • • • • • • • •
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 font-medium mt-1">
+                          Pendiente de que el creador realice el sorteo.
+                        </p>
+                      )}
+                    </div>
+
+                    {hasAssignment && (
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 flex-wrap">
+                        {/* Botón Revelar / Ocultar */}
+                        <button
+                          type="button"
+                          onClick={() => toggleRevealManaged(ma.userId)}
+                          className="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition flex items-center justify-center gap-1.5"
+                        >
+                          <span>{isRevealed ? '🙈' : '👁️'}</span>
+                          <span>{isRevealed ? 'Ocultar' : 'Ver en secreto'}</span>
+                        </button>
+
+                        {/* Botón Imprimir Papeleta */}
+                        <button
+                          type="button"
+                          onClick={() => handlePrintCard(ma.name, ma.assignedTo.name)}
+                          className="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition flex items-center justify-center gap-1.5 shadow-sm"
+                          title="Imprimir papeleta recortable para entregarle en mano"
+                        >
+                          <span>🖨️</span>
+                          <span>Imprimir papeleta</span>
+                        </button>
+
+                        {/* Botones de Validación */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleValidateManaged(ma.userId, 'approve')}
+                            disabled={validatingManagedId === ma.userId}
+                            className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 ${
+                              ma.validationStatus === 'approved'
+                                ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600 ring-offset-1'
+                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300'
+                            }`}
+                          >
+                            <span>👍</span>
+                            <span>{ma.validationStatus === 'approved' ? 'Validado ✓' : 'Validar'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleValidateManaged(ma.userId, 'reject')}
+                            disabled={validatingManagedId === ma.userId}
+                            className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 ${
+                              ma.validationStatus === 'rejected'
+                                ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-600 ring-offset-1'
+                                : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-300'
+                            }`}
+                          >
+                            <span>👎</span>
+                            <span>{ma.validationStatus === 'rejected' ? 'Rechazado ✕' : 'Repetir'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Progreso Global de Validaciones */}
         {group.assigned && group.validationStats && (
           <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm mb-8">
@@ -807,7 +1091,14 @@ export default function GroupPage() {
                         </div>
                       </td>
                       <td className="px-5 py-4 text-sm text-slate-600 font-medium">
-                        {m.email}
+                        {m.isManaged ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                            <span>👵</span>
+                            <span>Sin móvil · Tutor: {m.guardianName || 'Familiar'}</span>
+                          </span>
+                        ) : (
+                          m.email
+                        )}
                       </td>
                       <td className="px-5 py-4 text-right">
                         {isMemberCreator ? (
@@ -841,17 +1132,19 @@ export default function GroupPage() {
                         <td className="px-5 py-4 text-center">
                           {!isMemberCreator ? (
                             <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => handleResendInvite(m)}
-                                disabled={resendingMemberId === m.id}
-                                title={`Enviar / Reenviar correo de invitación a ${m.email}`}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-200 hover:border-blue-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
-                              >
-                                <span>✉️</span>
-                                <span>
-                                  {resendingMemberId === m.id ? 'Enviando...' : 'Invitar'}
-                                </span>
-                              </button>
+                              {!m.isManaged && (
+                                <button
+                                  onClick={() => handleResendInvite(m)}
+                                  disabled={resendingMemberId === m.id}
+                                  title={`Enviar / Reenviar correo de invitación a ${m.email}`}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-200 hover:border-blue-600 rounded-xl transition duration-150 active:scale-95 disabled:opacity-50"
+                                >
+                                  <span>✉️</span>
+                                  <span>
+                                    {resendingMemberId === m.id ? 'Enviando...' : 'Invitar'}
+                                  </span>
+                                </button>
+                              )}
 
                               <button
                                 onClick={() => handleRemoveMember(m)}
@@ -940,43 +1233,93 @@ export default function GroupPage() {
                 />
               </div>
 
-              <div>
-                <label htmlFor="participantEmail" className="label-field">
-                  Correo electrónico
-                </label>
-                <input
-                  id="participantEmail"
-                  type="email"
-                  required
-                  value={addEmail}
-                  onChange={(e) => setAddEmail(e.target.value)}
-                  placeholder="laura@ejemplo.com"
-                  className="input-field"
-                />
-                <p className="text-xs text-slate-500 mt-2">
-                  Se enviará a este correo el amigo que le haya tocado tras el sorteo.
-                </p>
-              </div>
-
-              {/* Opción de enviar email de invitación con el enlace y código */}
+              {/* Casilla persona mayor o sin móvil */}
               <div
-                className="flex items-start gap-3 p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200 cursor-pointer select-none"
-                onClick={() => setSendInviteEmail(!sendInviteEmail)}
+                className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-50 border-2 border-amber-300 cursor-pointer select-none"
+                onClick={() => setIsManagedPerson(!isManagedPerson)}
               >
                 <input
                   type="checkbox"
-                  id="modalSendInvite"
-                  checked={sendInviteEmail}
-                  onChange={(e) => setSendInviteEmail(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 text-red-600 rounded border-slate-300 focus:ring-red-500 cursor-pointer"
+                  id="modalIsManaged"
+                  checked={isManagedPerson}
+                  onChange={(e) => setIsManagedPerson(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 cursor-pointer"
                 />
                 <label
-                  htmlFor="modalSendInvite"
-                  className="text-xs sm:text-sm font-semibold text-slate-700 cursor-pointer"
+                  htmlFor="modalIsManaged"
+                  className="text-xs sm:text-sm font-semibold text-amber-900 cursor-pointer"
                 >
-                  ✉️ Enviar correo de invitación con el enlace directo y código para unirse al grupo
+                  <span className="block font-bold">👵 Esta persona no tiene móvil ni correo (mayor o niño)</span>
+                  <span className="text-xs text-amber-800 font-normal block mt-0.5">
+                    No necesitará registrarse. Un familiar actuará como tutor responsable para ver su amigo invisible, imprimirle su papeleta y validar en su nombre.
+                  </span>
                 </label>
               </div>
+
+              {!isManagedPerson ? (
+                <>
+                  <div>
+                    <label htmlFor="participantEmail" className="label-field">
+                      Correo electrónico
+                    </label>
+                    <input
+                      id="participantEmail"
+                      type="email"
+                      required={!isManagedPerson}
+                      value={addEmail}
+                      onChange={(e) => setAddEmail(e.target.value)}
+                      placeholder="laura@ejemplo.com"
+                      className="input-field"
+                    />
+                    <p className="text-xs text-slate-500 mt-2">
+                      Se enviará a este correo el amigo que le haya tocado tras el sorteo.
+                    </p>
+                  </div>
+
+                  {/* Opción de enviar email de invitación con el enlace y código */}
+                  <div
+                    className="flex items-start gap-3 p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200 cursor-pointer select-none"
+                    onClick={() => setSendInviteEmail(!sendInviteEmail)}
+                  >
+                    <input
+                      type="checkbox"
+                      id="modalSendInvite"
+                      checked={sendInviteEmail}
+                      onChange={(e) => setSendInviteEmail(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 text-red-600 rounded border-slate-300 focus:ring-red-500 cursor-pointer"
+                    />
+                    <label
+                      htmlFor="modalSendInvite"
+                      className="text-xs sm:text-sm font-semibold text-slate-700 cursor-pointer"
+                    >
+                      ✉️ Enviar correo de invitación con el enlace directo y código para unirse al grupo
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label htmlFor="guardianSelect" className="label-field">
+                    Tutor / Familiar Responsable
+                  </label>
+                  <select
+                    id="guardianSelect"
+                    value={selectedGuardianId || (user?.id || user?.uid || '')}
+                    onChange={(e) => setSelectedGuardianId(e.target.value)}
+                    className="input-field"
+                  >
+                    {members
+                      .filter((m) => !m.isManaged)
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} {m.id === (user?.id || user?.uid) ? '(Tú)' : ''}
+                        </option>
+                      ))}
+                  </select>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Este familiar podrá ver discretamente a quién le ha tocado, imprimir su papeleta y validar en su nombre.
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-3">
                 <button
@@ -991,7 +1334,11 @@ export default function GroupPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={addingMember || !addName.trim() || !addEmail.trim()}
+                  disabled={
+                    addingMember ||
+                    !addName.trim() ||
+                    (!isManagedPerson && !addEmail.trim())
+                  }
                   className="btn-primary flex-1"
                 >
                   {addingMember ? 'Añadiendo...' : 'Añadir'}

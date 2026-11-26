@@ -198,11 +198,13 @@ router.get('/:id', authenticate, (req, res) => {
     const members = db
       .prepare(`
         SELECT m.user_id, u.display_name, u.email, u.photo_url, m.assigned_to,
-               m.validation_status,
-               au.display_name AS assigned_name
+               m.validation_status, m.managed_by,
+               au.display_name AS assigned_name,
+               gu.display_name AS guardian_name
         FROM members m
         JOIN users u ON u.id = m.user_id
         LEFT JOIN users au ON au.id = m.assigned_to
+        LEFT JOIN users gu ON gu.id = m.managed_by
         WHERE m.group_id = ?
         ORDER BY m.joined_at
       `)
@@ -239,9 +241,12 @@ router.get('/:id', authenticate, (req, res) => {
       members: members.map((m) => ({
         id: m.user_id,
         name: m.display_name,
-        email: m.email,
+        email: m.email && m.email.endsWith('@sin-email.local') ? '' : m.email,
         photo: m.photo_url,
         validationStatus: m.validation_status || 'pending',
+        isManaged: Boolean(m.managed_by),
+        managedBy: m.managed_by,
+        guardianName: m.guardian_name,
         assignedTo: m.assigned_to ? { id: m.assigned_to, name: m.assigned_name } : null,
       })),
     });
@@ -254,17 +259,24 @@ router.get('/:id', authenticate, (req, res) => {
 // Añadir un participante manualmente al grupo (solo el creador)
 router.post('/:id/members', authenticate, (req, res) => {
   const { id } = req.params;
-  const { name, email, sendEmail } = req.body;
+  const { name, email, sendEmail, isManaged, guardianId } = req.body;
 
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'El nombre y apellido son obligatorios' });
   }
-  if (!email || !email.trim()) {
+
+  const cleanName = name.trim();
+  const isManagedPerson = Boolean(isManaged);
+
+  let cleanEmail = (email || '').trim().toLowerCase();
+  if (!isManagedPerson && !cleanEmail) {
     return res.status(400).json({ error: 'El correo electrónico es obligatorio' });
   }
 
-  const cleanEmail = email.trim().toLowerCase();
-  const cleanName = name.trim();
+  // Si es persona gestionada (mayor/niño sin email), generar identificador local único
+  if (isManagedPerson && !cleanEmail) {
+    cleanEmail = `sin-email-${uuidv4().slice(0, 8)}@sin-email.local`;
+  }
 
   try {
     const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(id);
@@ -277,17 +289,31 @@ router.post('/:id/members', authenticate, (req, res) => {
 
     const wasAssigned = Boolean(group.assigned);
 
-    // Comprobar si ya existe un miembro con este email en el grupo
-    const existingMember = db
-      .prepare(`
-        SELECT m.id FROM members m
-        JOIN users u ON u.id = m.user_id
-        WHERE m.group_id = ? AND LOWER(u.email) = ?
-      `)
-      .get(id, cleanEmail);
+    // Comprobar si ya existe un miembro con este email en el grupo (si no es autogenerado)
+    if (!cleanEmail.endsWith('@sin-email.local')) {
+      const existingMember = db
+        .prepare(`
+          SELECT m.id FROM members m
+          JOIN users u ON u.id = m.user_id
+          WHERE m.group_id = ? AND LOWER(u.email) = ?
+        `)
+        .get(id, cleanEmail);
 
-    if (existingMember) {
-      return res.status(400).json({ error: 'Este correo ya forma parte del grupo' });
+      if (existingMember) {
+        return res.status(400).json({ error: 'Este correo ya forma parte del grupo' });
+      }
+    }
+
+    // Definir el tutor responsable si es persona gestionada
+    let effectiveGuardianId = null;
+    if (isManagedPerson) {
+      effectiveGuardianId = guardianId || (req.user.id || req.user.uid);
+      const isGuardianMember = db
+        .prepare('SELECT id FROM members WHERE group_id = ? AND user_id = ?')
+        .get(id, effectiveGuardianId);
+      if (!isGuardianMember) {
+        effectiveGuardianId = req.user.id || req.user.uid;
+      }
     }
 
     // Buscar si el usuario ya existe en la base de datos o crearlo
@@ -308,11 +334,11 @@ router.post('/:id/members', authenticate, (req, res) => {
     }
 
     const tx = db.transaction(() => {
-      // Añadir al grupo
+      // Añadir al grupo con tutor asignado
       db.prepare(`
-        INSERT INTO members (id, group_id, user_id, validation_status)
-        VALUES (?, ?, ?, 'pending')
-      `).run(uuidv4(), id, userId);
+        INSERT INTO members (id, group_id, user_id, validation_status, managed_by)
+        VALUES (?, ?, ?, 'pending', ?)
+      `).run(uuidv4(), id, userId, effectiveGuardianId);
 
       // Si el sorteo ya estaba hecho, se reinicia para que el nuevo miembro quede incluido
       if (wasAssigned) {
@@ -324,8 +350,9 @@ router.post('/:id/members', authenticate, (req, res) => {
     });
     tx();
 
-    // Enviar correo de invitación con el código y enlace directo (por defecto activo)
-    const shouldSendEmail = sendEmail !== false;
+    // Enviar correo de invitación con el código y enlace directo (si tiene correo real)
+    const shouldSendEmail =
+      sendEmail !== false && !isManagedPerson && !cleanEmail.endsWith('@sin-email.local');
     if (shouldSendEmail) {
       const creatorUser = db
         .prepare('SELECT display_name FROM users WHERE id = ?')
@@ -342,7 +369,9 @@ router.post('/:id/members', authenticate, (req, res) => {
     }
 
     res.status(201).json({
-      message: wasAssigned
+      message: isManagedPerson
+        ? `¡${cleanName} ha sido añadido como participante gestionado por su tutor!`
+        : wasAssigned
         ? `Participante añadido. Se ha enviado un email de invitación a ${cleanEmail} y el sorteo se ha reiniciado para incluirlo en la próxima tirada.`
         : shouldSendEmail
         ? `Participante añadido y correo de invitación enviado a ${cleanEmail}.`
@@ -351,7 +380,9 @@ router.post('/:id/members', authenticate, (req, res) => {
       member: {
         id: userId,
         name: cleanName,
-        email: cleanEmail,
+        email: cleanEmail.endsWith('@sin-email.local') ? '' : cleanEmail,
+        isManaged: isManagedPerson,
+        managedBy: effectiveGuardianId,
       },
     });
   } catch (err) {
@@ -555,11 +586,11 @@ router.post('/:id/reset', authenticate, (req, res) => {
   }
 });
 
-// Validar o rechazar asignación por parte de un participante
+// Validar o rechazar asignación por parte de un participante (o su tutor)
 router.post('/:id/validate', authenticate, async (req, res) => {
   const { id } = req.params;
-  const { action } = req.body; // 'approve' | 'reject'
-  const userId = req.user.id || req.user.uid;
+  const { action, targetUserId } = req.body; // 'approve' | 'reject'
+  const currentUserId = req.user.id || req.user.uid;
 
   if (!['approve', 'reject'].includes(action)) {
     return res.status(400).json({ error: 'Acción inválida. Debe ser approve o reject' });
@@ -574,9 +605,30 @@ router.post('/:id/validate', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Aún no se ha realizado el sorteo en este grupo' });
     }
 
+    let effectiveUserId = currentUserId;
+
+    if (targetUserId && targetUserId !== currentUserId) {
+      const targetMember = db
+        .prepare('SELECT * FROM members WHERE group_id = ? AND user_id = ?')
+        .get(id, targetUserId);
+
+      if (!targetMember) {
+        return res.status(404).json({ error: 'Participante no encontrado en este grupo' });
+      }
+
+      // Solo el tutor asignado o el creador del grupo pueden validar en nombre de este participante
+      if (targetMember.managed_by !== currentUserId && group.creator_id !== currentUserId) {
+        return res
+          .status(403)
+          .json({ error: 'No tienes permisos para validar en nombre de este participante' });
+      }
+
+      effectiveUserId = targetUserId;
+    }
+
     const member = db
       .prepare('SELECT * FROM members WHERE group_id = ? AND user_id = ?')
-      .get(id, userId);
+      .get(id, effectiveUserId);
     if (!member) {
       return res.status(403).json({ error: 'No eres miembro de este grupo' });
     }
@@ -584,7 +636,7 @@ router.post('/:id/validate', authenticate, async (req, res) => {
     const newStatus = action === 'approve' ? 'approved' : 'rejected';
     db.prepare(
       `UPDATE members SET validation_status = ? WHERE group_id = ? AND user_id = ?`
-    ).run(newStatus, id, userId);
+    ).run(newStatus, id, effectiveUserId);
 
     // Si un participante rechaza, avisar de inmediato por email al creador del grupo
     if (action === 'reject') {
@@ -598,9 +650,18 @@ router.post('/:id/validate', authenticate, async (req, res) => {
           )
           .get(id);
 
-        const currentUser = db
+        const targetUser = db
           .prepare(`SELECT display_name FROM users WHERE id = ?`)
-          .get(userId);
+          .get(effectiveUserId);
+
+        const actorUser = db
+          .prepare(`SELECT display_name FROM users WHERE id = ?`)
+          .get(currentUserId);
+
+        const rejectorLabel =
+          targetUserId && targetUserId !== currentUserId
+            ? `${targetUser?.display_name || 'Participante'} (gestionado por ${actorUser?.display_name || 'su tutor'})`
+            : actorUser?.display_name || 'Un participante';
 
         if (creator && creator.email) {
           sendRejectionNoticeToCreator({
@@ -608,7 +669,7 @@ router.post('/:id/validate', authenticate, async (req, res) => {
             creatorName: creator.display_name || 'Creador',
             groupName: group.name,
             groupId: group.id,
-            rejectorName: currentUser?.display_name || 'Un participante',
+            rejectorName: rejectorLabel,
           }).catch((err) =>
             console.error('Error enviando aviso de rechazo al creador:', err.message)
           );
@@ -646,7 +707,7 @@ router.post('/:id/validate', authenticate, async (req, res) => {
         .all(id);
 
       for (const item of assignments) {
-        if (item.giver_email) {
+        if (item.giver_email && !item.giver_email.endsWith('@sin-email.local')) {
           sendAssignmentEmail({
             giverEmail: item.giver_email,
             giverName: item.giver_name,
@@ -667,10 +728,10 @@ router.post('/:id/validate', authenticate, async (req, res) => {
       emailsTriggered,
       message:
         allApproved
-          ? '¡Todos los miembros han validado su asignación! Se han enviado los correos a todos los participantes 🎁'
+          ? '¡Todos los miembros han validado su asignación! Se han enviado los correos a todos los participantes con email 🎁'
           : action === 'approve'
-          ? '¡Has validado tu asignación con éxito! Esperando a que el resto de participantes validen.'
-          : 'Has indicado que no te convence la asignación. El creador del grupo puede volver a sortear.',
+          ? '¡Validación registrada con éxito! Esperando a que el resto de participantes validen.'
+          : 'Se ha indicado que no convence la asignación. El creador del grupo puede volver a sortear.',
     });
   } catch (err) {
     console.error(err);
@@ -678,9 +739,10 @@ router.post('/:id/validate', authenticate, async (req, res) => {
   }
 });
 
-// Obtener mi asignación en un grupo
+// Obtener mi asignación y la de mis participantes gestionados en un grupo
 router.get('/:id/my-assignment', authenticate, (req, res) => {
   const { id } = req.params;
+  const currentUserId = req.user.id || req.user.uid;
 
   try {
     const group = db.prepare('SELECT assigned, emails_sent FROM groups WHERE id = ?').get(id);
@@ -696,21 +758,42 @@ router.get('/:id/my-assignment', authenticate, (req, res) => {
         LEFT JOIN users u ON u.id = m.assigned_to
         WHERE m.group_id = ? AND m.user_id = ?
       `)
-      .get(id, req.user.id || req.user.uid);
+      .get(id, currentUserId);
 
-    if (!member || !member.assigned_to) {
-      return res.json({ assigned: false });
-    }
+    // Obtener los participantes que gestiona este usuario (o todos los gestionados si es creador)
+    const managedMembers = db
+      .prepare(`
+        SELECT m.user_id, u.display_name AS member_name, m.assigned_to, m.validation_status,
+               au.display_name AS assigned_name
+        FROM members m
+        JOIN users u ON u.id = m.user_id
+        LEFT JOIN users au ON au.id = m.assigned_to
+        WHERE m.group_id = ? AND (m.managed_by = ? OR (? = (SELECT creator_id FROM groups WHERE id = ?) AND m.managed_by IS NOT NULL))
+      `)
+      .all(id, currentUserId, currentUserId, id);
 
     res.json({
-      assigned: true,
-      validationStatus: member.validation_status || 'pending',
+      assigned: Boolean(member && member.assigned_to),
+      validationStatus: member?.validation_status || 'pending',
       emailsSent: Boolean(group.emails_sent),
-      assignedTo: {
-        id: member.assigned_to,
-        name: member.assigned_name,
-        email: member.assigned_email,
-      },
+      assignedTo: member?.assigned_to
+        ? {
+            id: member.assigned_to,
+            name: member.assigned_name,
+            email: member.assigned_email,
+          }
+        : null,
+      managedAssignments: managedMembers.map((mm) => ({
+        userId: mm.user_id,
+        name: mm.member_name,
+        assignedTo: mm.assigned_to
+          ? {
+              id: mm.assigned_to,
+              name: mm.assigned_name,
+            }
+          : null,
+        validationStatus: mm.validation_status || 'pending',
+      })),
     });
   } catch (err) {
     console.error(err);
